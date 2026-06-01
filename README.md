@@ -52,31 +52,34 @@ PROJECT.md is that file.
 
 ## How it compares
 
-| Capability                          | AGENTS.md | Google ADK    | PROJECT.md    |
-| ----------------------------------- | :-------: | :-----------: | :-----------: |
-| Format                              | Markdown  | Python code   | Markdown+YAML |
-| Author profile                      | anyone    | developer     | anyone        |
-| Single-agent instructions           | ✅        | ✅            | ✅            |
-| Multi-agent pipeline                | ❌        | ✅            | ✅            |
-| Sequential execution                | —         | ✅            | ✅            |
-| Parallel execution                  | —         | ✅            | ✅ (`wave`)   |
-| Explicit data dependencies          | —         | implicit      | ✅ (`after`)  |
-| Loops / retry on judge              | —         | ✅            | ✅ (ext)      |
-| Hierarchical agents                 | —         | ✅            | ❌ (v0.1)     |
-| Per-agent model & provider          | —         | ✅            | ✅ (ext)      |
-| Tools declaration                   | partial   | ✅            | ✅ (ext)      |
-| Typed I/O (schema)                  | —         | ✅ (Pydantic) | ✅ (ext)      |
-| Secrets as references               | —         | code-level    | ✅ (ext)      |
-| Cross-run memory                    | —         | code-level    | ✅ (ext)      |
-| Lifecycle hooks                     | —         | code-level    | ✅ (ext)      |
-| Cost / budget guardrails            | —         | ❌            | ✅ (ext)      |
-| Action constraints (allow/deny)     | —         | ❌            | ✅ (ext)      |
-| Scheduling (cron)                   | —         | ❌            | ✅ (ext)      |
-| Run modes (dry/test/prod)           | —         | ❌            | ✅ (ext)      |
-| Framework-independent               | ✅        | ❌ (ADK only) | ✅            |
-| Human-readable diff in PR review    | ✅        | ❌            | ✅            |
+| Capability                          | AGENTS.md | SKILL.md  | CrewAI yaml   | LangGraph     | Google ADK    | PROJECT.md    |
+| ----------------------------------- | :-------: | :-------: | :-----------: | :-----------: | :-----------: | :-----------: |
+| Format                              | Markdown  | Markdown  | 2× YAML       | Python code   | Python code   | Markdown+YAML |
+| Author profile                      | anyone    | anyone    | developer     | developer     | developer     | anyone        |
+| Scope                               | 1 agent   | 1 skill   | pipeline      | pipeline      | pipeline      | pipeline      |
+| Single file                         | ✅        | ✅        | ❌ (2 files)  | ❌ (code)     | ❌ (code)     | ✅            |
+| Multi-agent pipeline                | ❌        | ❌        | ✅            | ✅            | ✅            | ✅            |
+| Sequential execution                | —         | —         | ✅            | ✅            | ✅            | ✅            |
+| Parallel execution                  | —         | —         | ✅            | ✅            | ✅            | ✅ (`wave`)   |
+| Explicit data dependencies          | —         | —         | implicit      | ✅ (edges)    | implicit      | ✅ (`after`)  |
+| Loops / retry on judge              | —         | —         | partial       | ✅            | ✅            | ✅ (ext)      |
+| Hierarchical agents                 | —         | —         | ✅            | ✅            | ✅            | ❌ (v0.1)     |
+| Per-agent model & provider          | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
+| Tools declaration                   | partial   | partial   | ✅            | ✅            | ✅            | ✅ (ext)      |
+| Typed I/O (schema)                  | —         | —         | partial       | ✅            | ✅ (Pydantic) | ✅ (ext)      |
+| Secrets as references               | —         | —         | code-level    | code-level    | code-level    | ✅ (ext)      |
+| Cross-run memory                    | —         | —         | code-level    | ✅            | code-level    | ✅ (ext)      |
+| Lifecycle hooks                     | —         | —         | code-level    | code-level    | code-level    | ✅ (ext)      |
+| Cost / budget guardrails            | —         | —         | ❌            | ❌            | ❌            | ✅ (ext)      |
+| Action constraints (allow/deny)     | —         | —         | ❌            | ❌            | ❌            | ✅ (ext)      |
+| Scheduling (cron)                   | —         | —         | ❌            | ❌            | ❌            | ✅ (ext)      |
+| Run modes (dry/test/prod)           | —         | —         | ❌            | ❌            | ❌            | ✅ (ext)      |
+| Framework-independent               | ✅        | ✅        | ❌ (CrewAI)   | ❌ (LangGraph)| ❌ (ADK)      | ✅            |
+| Human-readable diff in PR review    | ✅        | ✅        | ✅            | ❌            | ❌            | ✅            |
 
-**Read it as:** AGENTS.md is *one layer down* (a single agent in a repo). Google ADK is *one layer over* (a code-first SDK for one framework). PROJECT.md sits in between — declarative enough for humans, structured enough for orchestrators, portable across frameworks.
+**Read it as:** AGENTS.md and SKILL.md describe *one* unit (an agent, a skill). CrewAI, LangGraph and ADK describe *pipelines* but in code or a framework-specific schema. PROJECT.md is the only format that is both **declarative Markdown** and **framework-independent** for the pipeline layer.
+
+> IDE-specific files like `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules` are intentionally omitted — they share AGENTS.md's scope (single agent, one repo) and only differ in which tool reads them.
 
 ---
 
