@@ -1,5 +1,7 @@
 # PROJECT.md
 
+![PROJECT.md](project.md.png)
+
 **Language / Язык / 语言 / 言語 / 언어:**
 [English](README.md) · [中文](README.zh.md) · [हिंदी](README.hi.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Español](README.es.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 

@@ -1,5 +1,7 @@
 # PROJECT.md reference validator
 
+![PROJECT.md](../project.md.png)
+
 A small Python validator for PROJECT.md `v0.1` Core conformance.
 
 It is **not** an orchestrator — it only parses and validates files. Useful for CI and for catching mistakes before a real run.
