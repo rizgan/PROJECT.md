@@ -1,5 +1,10 @@
 # PROJECT.md
 
+**Language / Язык / 语言 / 言語 / 언어:**
+[English](README.md) · [中文](README.zh.md) · [हिंदी](README.hi.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Español](README.es.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
+
+---
+
 An open file format for **multi-agent pipelines**.
 
 One Markdown file describes the whole project: which agents run, in what order, with which models, what they're allowed to do, and what happens when they fail. An orchestrator reads the file and executes the pipeline — no glue code required.
