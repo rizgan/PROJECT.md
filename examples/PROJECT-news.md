@@ -5,7 +5,7 @@ name: Tech News Daily
 status: active
 schedule: "0 8 * * *"
 run_mode: production
-language: [en, ru, ar]
+language: [en, ku, ka, ru, zh]
 output: [wordpress, telegram]
 max_cost: 1.00 USD
 allowed_domains:
