@@ -2,7 +2,7 @@
 
 **Version:** `0.1` (draft)
 **Status:** Breaking changes possible until `1.0`
-**License:** MIT
+**License:** Apache-2.0
 
 PROJECT.md is a Markdown file with a YAML frontmatter block that describes a multi-agent pipeline. An orchestrator reads the file and executes it.
 
