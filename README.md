@@ -50,6 +50,36 @@ PROJECT.md is that file.
 
 ---
 
+## How it compares
+
+| Capability                          | AGENTS.md | Google ADK    | PROJECT.md    |
+| ----------------------------------- | :-------: | :-----------: | :-----------: |
+| Format                              | Markdown  | Python code   | Markdown+YAML |
+| Author profile                      | anyone    | developer     | anyone        |
+| Single-agent instructions           | ✅        | ✅            | ✅            |
+| Multi-agent pipeline                | ❌        | ✅            | ✅            |
+| Sequential execution                | —         | ✅            | ✅            |
+| Parallel execution                  | —         | ✅            | ✅ (`wave`)   |
+| Explicit data dependencies          | —         | implicit      | ✅ (`after`)  |
+| Loops / retry on judge              | —         | ✅            | ✅ (ext)      |
+| Hierarchical agents                 | —         | ✅            | ❌ (v0.1)     |
+| Per-agent model & provider          | —         | ✅            | ✅ (ext)      |
+| Tools declaration                   | partial   | ✅            | ✅ (ext)      |
+| Typed I/O (schema)                  | —         | ✅ (Pydantic) | ✅ (ext)      |
+| Secrets as references               | —         | code-level    | ✅ (ext)      |
+| Cross-run memory                    | —         | code-level    | ✅ (ext)      |
+| Lifecycle hooks                     | —         | code-level    | ✅ (ext)      |
+| Cost / budget guardrails            | —         | ❌            | ✅ (ext)      |
+| Action constraints (allow/deny)     | —         | ❌            | ✅ (ext)      |
+| Scheduling (cron)                   | —         | ❌            | ✅ (ext)      |
+| Run modes (dry/test/prod)           | —         | ❌            | ✅ (ext)      |
+| Framework-independent               | ✅        | ❌ (ADK only) | ✅            |
+| Human-readable diff in PR review    | ✅        | ❌            | ✅            |
+
+**Read it as:** AGENTS.md is *one layer down* (a single agent in a repo). Google ADK is *one layer over* (a code-first SDK for one framework). PROJECT.md sits in between — declarative enough for humans, structured enough for orchestrators, portable across frameworks.
+
+---
+
 ## Spec
 
 - [SPEC.md](SPEC.md) — full specification (Core + Extensions)
