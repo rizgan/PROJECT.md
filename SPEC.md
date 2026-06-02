@@ -64,11 +64,33 @@ This section is normative. A "PROJECT.md compatible" orchestrator MUST implement
 
 ### 2.1 Frontmatter (Core)
 
-| Field          | Type   | Required | Description                                                              |
-| -------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| `spec_version` | string | yes      | Spec version this file targets. `0.3` for this version.                  |
-| `id`           | string | yes      | Stable identifier. Allowed: `[A-Za-z0-9_-]+`.                            |
-| `name`         | string | yes      | Human-readable name.                                                     |
+| Field          | Type            | Required | Description                                                                   |
+| -------------- | --------------- | -------- | ----------------------------------------------------------------------------- |
+| `spec_version` | string          | yes      | Spec version this file targets. `0.3` for this version.                       |
+| `id`           | string          | yes      | Stable identifier. Allowed: `[A-Za-z0-9_-]+`.                                 |
+| `name`         | string          | yes      | Human-readable name.                                                          |
+| `extensions`   | list of strings | no       | Extension identifiers (e.g. `ext:tools`) that this file relies on. See 2.1.1. |
+
+#### 2.1.1 `extensions` declaration
+
+A file MAY declare which extensions it relies on:
+
+```yaml
+extensions:
+  - ext:tools
+  - ext:secrets
+  - ext:streaming
+  - ext:checkpoints
+```
+
+Rules:
+
+- Each entry MUST be an extension identifier defined in section 3 (e.g. `ext:tools`, `ext:io-schema`).
+- An orchestrator that does not support an extension listed here MUST stop with a clear error before any agent runs ("file requires `ext:streaming`, this orchestrator does not support it"). This is fail-fast on declared dependencies.
+- An orchestrator that supports an extension listed here MUST treat the corresponding fields/sections as active for this file.
+- If `extensions` is omitted, the orchestrator MUST infer required extensions from the fields and sections present in the file. Inference failures (an unknown field that is not gated by 2.5(7)) follow the warning rule of 2.5(7).
+- Listing an extension that the file does not actually use is permitted (no-op) but discouraged; a strict validator MAY warn.
+- The `extensions` list is the file's **declared dependencies**. The orchestrator's **advertised support** (per the introduction to section 3) is the converse. A run is feasible iff `file.extensions ⊆ orchestrator.supported_extensions`.
 
 ### 2.2 `## Agents`
 
@@ -724,6 +746,48 @@ Rules:
 - When a fixture is missing, the orchestrator MUST fail the agent (no silent fallback to live calls in `dry_run`).
 - Replay support for `ext:streaming` is optional in v0.3; an orchestrator that does not support streaming replay MUST fail fast on a `streaming: true` producer rather than synthesize chunks.
 - `ext:eval` MAY run against replayed outputs.
+
+### 3.29 Compatibility matrix
+
+This subsection is **informative**. It summarizes interactions between extensions that are stated normatively in the individual rules above. If the matrix and the prose disagree, the prose wins.
+
+Legend:
+
+- **requires** — A cannot function without B; an orchestrator advertising A MUST also advertise B.
+- **extends** — A adds fields/semantics on top of B; supporting A is meaningful only when B is also supported.
+- **supersedes** — A replaces a part of B's surface when both are supported.
+- **relaxes** — A loosens a Core rule for a scoped pair of constructs.
+- **interacts** — A and B have defined cross-rules but neither requires the other.
+- **soft-requires** — A degrades gracefully without B (specific behavior documented), but is most useful with B.
+
+| Extension               | Relation       | Other                                                          | Rule lives in |
+| ----------------------- | -------------- | -------------------------------------------------------------- | ------------- |
+| `ext:streaming`         | relaxes        | Core 2.3 (wave barrier)                                        | 3.20          |
+| `ext:streaming`         | interacts      | `ext:io-schema`                                                | 3.20          |
+| `ext:streaming`         | interacts      | `ext:checkpoints`                                              | 3.21          |
+| `ext:streaming`         | interacts      | `ext:dry-run-replay`                                           | 3.28          |
+| `ext:checkpoints`       | interacts      | `ext:hosts` (host-pinned resume)                               | 3.21          |
+| `ext:budget`            | supersedes     | `ext:constraints` (`max_cost`)                                 | 3.19          |
+| `ext:budget`            | soft-requires  | `ext:cost-routing` (for `degrade_model`)                       | 3.19          |
+| `ext:cost-routing`      | extends        | `ext:models`                                                   | 3.24          |
+| `ext:plugins`           | extends        | `ext:tools`                                                    | 3.16          |
+| `ext:profiles`          | interacts      | Core 2.1 (resolved before validation)                          | 3.17          |
+| `ext:profiles`          | interacts      | 2.6 substitution merge order                                   | 2.6 / 3.17    |
+| `ext:contracts`         | extends        | `ext:io-schema`                                                | 3.26          |
+| `ext:human-in-the-loop` | requires       | `ext:control-flow` (reuses `loop:`)                            | 3.23          |
+| `ext:human-in-the-loop` | soft-requires  | `ext:reliability` (for `timeout`)                              | 3.23          |
+| `ext:eval`              | interacts      | `ext:reliability` (`## Quality Checks`)                        | 3.18          |
+| `ext:eval`              | interacts      | `ext:dry-run-replay`                                           | 3.28          |
+| `ext:dry-run-replay`    | extends        | `ext:run-modes`                                                | 3.28          |
+| `ext:dry-run-replay`    | interacts      | `ext:control-flow` (per-iteration fixtures)                    | 3.28          |
+| `ext:dry-run-replay`    | interacts      | `ext:human-in-the-loop` (loop iterations)                      | 3.28          |
+| `ext:memory`            | extends        | Core 2.4 / 2.6 (adds `memory.` namespace)                      | 2.6 / 3.8     |
+| `ext:prompt-templates`  | interacts      | 2.6 substitution merge order                                   | 2.6 / 3.27    |
+| `ext:subagents`         | interacts      | Core 2.3 (ad-hoc invocation alongside waves)                   | 3.14          |
+| `ext:hosts`             | interacts      | `ext:secrets` (host credentials)                               | 3.12          |
+| `ext:hosts`             | interacts      | `ext:constraints` (`allowed_paths`/`allowed_domains` per host) | 3.12          |
+| `ext:i18n`              | extends        | Core 2.4 (substitution within selected language block)         | 3.25          |
+| All extensions          | constrained by | Section 4.1 (no runtime gating of agent set/edges)             | 4.1           |
 
 ---
 
