@@ -120,7 +120,21 @@ To claim "PROJECT.md `0.3` Core compatible", an orchestrator MUST:
 3. Execute the `## Agents` section per section 2.3.
 4. Perform variable substitution per section 2.4.
 5. Reject files declaring a `spec_version` it does not support.
-6. Ignore unknown sections, unknown frontmatter fields, and unknown agent inline fields (forward compatibility).
+6. Ignore unknown **sections** and unknown **frontmatter** fields (forward compatibility — new features land via new sections and new frontmatter keys).
+7. Treat unknown **agent inline fields** as follows (agent inline fields are a hot zone where silent ignore is dangerous):
+   - A field whose name matches the gating prefix pattern `^(if_|when_|skip_|skip$|run_if$|enabled_|gate_|cond_|unless_|only_when_|predicate_)` MUST cause the orchestrator to stop with an error. See section 4.1.
+   - Any other unknown inline field SHOULD produce a warning. An orchestrator MAY accept it for forward compatibility, but MUST NOT assign it semantics it does not specify.
+
+### 2.6 Variable namespaces
+
+Core template substitution (2.4) resolves names against frontmatter fields. Extensions MAY introduce additional top-level namespaces in `{{ ns.key }}` form (e.g. `{{ memory.x }}` from `ext:memory`, `{{ timestamp }}` from `ext:observability`). An orchestrator MUST resolve namespaces only for extensions it supports; an unresolved namespace MUST be treated as an unresolved variable per 2.4.
+
+Layered substitution sources, when multiple are active, are merged in the following precedence (later wins):
+
+1. Frontmatter fields (Core).
+2. Profile-supplied fields (`ext:profiles`), once resolved.
+3. Memory namespace (`ext:memory`), under `memory.`.
+4. Per-agent `prompt_vars` (`ext:prompt-templates`).
 
 ---
 
@@ -318,16 +332,21 @@ Adds:
 
 - `spawnable: true` on an agent — marks it callable from another agent in addition to (or instead of) its `wave` slot.
 - `may_call:` on an agent — explicit allowlist of agent names this agent is permitted to invoke.
-- A top-level `## Subagents` block MAY redeclare or document the call graph for readability.
-- `max_depth` on the frontmatter — maximum nesting depth for sub-calls (default: orchestrator-defined; recommended `3`).
+- A top-level `## Subagents` block carrying execution policy for sub-calls. Defined keys:
+  - `max_depth` (integer ≥ 1, default `3`) — maximum nesting depth for ad-hoc sub-calls. Cycles in `may_call` are permitted but MUST be cut off here.
+  - `on_depth_exceeded` (`stop` | `notify`, default `stop`) — action when `max_depth` is hit.
+  Orchestrators MUST ignore unknown keys inside `## Subagents` (forward compatibility).
 
 ```markdown
 ---
 spec_version: 0.3
 id: PROJECT-research
 name: Research
-max_depth: 3
 ---
+
+## Subagents
+max_depth: 3
+on_depth_exceeded: stop
 
 ### planner
 wave: 1
@@ -346,8 +365,7 @@ Rules:
 
 - An agent MUST NOT invoke an agent not listed in its `may_call`. If `may_call` is omitted, the agent MAY NOT spawn anyone.
 - An agent that is `spawnable: true` MAY omit `wave`. If both are present, the orchestrator MUST honor `wave` for static execution and additionally permit ad-hoc invocation.
-- The orchestrator MUST stop the run with an error if invocation depth exceeds `max_depth`.
-- Cycles in `may_call` are permitted but MUST be cut off by `max_depth`.
+- When invocation depth exceeds `## Subagents.max_depth`, the orchestrator MUST apply `on_depth_exceeded`.
 
 ### 3.15 `ext:rag` — knowledge sources
 
@@ -419,14 +437,16 @@ profile_overlay: dev
 
 Rules:
 
-- The orchestrator MUST first load `profile`, then apply `profile_overlay` on top, then apply the PROJECT.md frontmatter and sections. Later layers override earlier ones field-by-field.
+- The orchestrator MUST resolve `profile` and `profile_overlay` **before** validating Core fields (2.1). Layer order: `profile` first, then `profile_overlay`, then PROJECT.md frontmatter and sections. Later layers override earlier ones field-by-field.
 - Profile resolution (lookup path, format) is orchestrator-defined.
 - An unresolved `profile` or `profile_overlay` MUST cause the orchestrator to stop before the first agent runs.
-- A PROJECT.md MUST remain valid when its referenced profiles are absent in another orchestrator — i.e. profiles supply defaults, not required fields. (If a Core field is provided only by the profile, that orchestrator MUST report a clear error.)
+- Profiles MAY supply Core-required fields (e.g. `name`) and extension fields (`provider`, `model`, `tools`, `secrets`, `constraints`, ...). A PROJECT.md whose Core validity depends on a profile is therefore **not portable** to an orchestrator that lacks that profile; the author SHOULD make this dependency explicit (e.g. encode the profile name in `id`, document it in the body) and the orchestrator MUST report a clear error rather than silently substituting defaults.
 
 ### 3.18 `ext:eval` — project-level evaluation
 
 Adds a top-level `## Evaluation` section describing project-wide success criteria, complementing per-agent `## Quality Checks` from `ext:reliability`.
+
+This extension covers **dataset-based** evaluation only. For assertions on a single agent's output without a dataset (e.g. "publisher must produce ≥ 5 items"), use `## Quality Checks` from `ext:reliability`.
 
 ```markdown
 ## Evaluation
@@ -478,7 +498,8 @@ on_overrun: degrade_model
 Rules:
 
 - Tighter scope wins. Per-agent budget MUST NOT exceed the run-level budget; if it does, the orchestrator MUST stop before the first agent runs.
-- `degrade_model` requires a `fallback` model to be declared (see `ext:cost-routing`); without one, the orchestrator MUST treat it as `stop`.
+- Relationship to `ext:constraints` (3.7): when both extensions are supported, `ext:budget` **supersedes** 3.7's `max_cost`. The 3.7 `max_cost` is equivalent to the run-scope `max_cost` of 3.19; the two MUST NOT contradict, and an orchestrator that supports both MUST treat them as the same field.
+- `on_overrun: degrade_model` requires `ext:cost-routing` support and a declared `fallback` model on the affected agent. Without either, the orchestrator MUST treat `degrade_model` as `stop`.
 
 ### 3.20 `ext:streaming` — incremental output between waves
 
@@ -495,11 +516,15 @@ after: producer
 consumes_stream: producer
 ```
 
+This extension is an explicit, scoped relaxation of section 2.3. It applies **only** to a producer/consumer pair where the producer is `streaming: true` and the consumer declares `consumes_stream: <producer>`. For every other pair of agents, section 2.3's wave barrier remains in force.
+
 Rules:
 
 - An agent with `streaming: true` MUST emit output as a sequence of chunks. Chunk format is orchestrator-defined.
-- A consumer with `consumes_stream: <name>` MAY be started by the orchestrator before its producer completes; the wave barrier is relaxed for this pair.
+- A consumer with `consumes_stream: <name>` MAY be started by the orchestrator before its producer completes; the wave barrier is relaxed only for this pair.
 - A consumer without `consumes_stream` MUST still observe the wave barrier even if the producer is `streaming: true`.
+- `after:` semantics are extended for streaming pairs: the consumer receives a **partial input** stream rather than a final output. Handling partial input (buffering, validating, deciding when it has "enough") is the consumer's responsibility, not the orchestrator's. The producer's final output, when available, MUST also be delivered as the closing element of the stream.
+- `ext:io-schema` validation against `output_schema` applies to the producer's final output, not to individual chunks.
 
 ### 3.21 `ext:checkpoints` — checkpointing and resume
 
@@ -527,8 +552,10 @@ idempotency_key: "search:{{ topic }}"
 Rules:
 
 - The orchestrator MUST persist enough state at each declared checkpoint to resume execution from that point.
-- On resume, agents whose `idempotency_key` matches a successful prior result MUST be skipped and their cached output reused.
+- The orchestrator MUST retain successful agent outputs at least for the lifetime of a single `run_id` and any resume chain derived from it. Cross-run reuse (matching keys across independent `run_id`s) is **not specified** and is orchestrator-defined.
+- On resume **within the same run_id chain**, agents whose `idempotency_key` matches a successful prior result MUST be skipped and their stored output reused.
 - Idempotency keys MUST be deterministic given the same frontmatter and inputs.
+- Interaction with `ext:hosts`: by default, resume MUST replay each agent on the same host where its checkpoint was produced. If that host is unreachable, the orchestrator MAY fail the resume, OR (if it documents this capability) replicate state to a fallback host listed in the agent's `host:` failover list. Silent migration to a different host is not permitted.
 
 ### 3.22 `ext:observability` — telemetry and tracing
 
@@ -554,24 +581,24 @@ Rules:
 
 ### 3.23 `ext:human-in-the-loop` — human review steps
 
-Allows an agent step to pause for human approval.
+Allows an agent step to pause for human approval. Reuses the `loop:` syntax of `ext:control-flow` rather than introducing a parallel form.
 
 ```markdown
 ### approver
 wave: 3
 human_review: true
 prompt_to_human: "Approve publication?"
-on_reject:
-  back_to: writer
-on_approve:
-  continue: true
 timeout: 24h
+loop:
+  if: decision == "rejected"
+  back_to: writer
+  max_loops: 3
 ```
 
 Rules:
 
-- An agent with `human_review: true` MUST pause after producing output and present `prompt_to_human` plus the agent's output to a human via an orchestrator-defined channel.
-- `on_approve` and `on_reject` mirror the loop semantics of `ext:control-flow`. `on_reject.back_to` MUST reference an existing agent in an earlier wave.
+- An agent with `human_review: true` MUST pause after producing output and present `prompt_to_human` plus the agent's output to a human via an orchestrator-defined channel. The human's decision (e.g. `approved`/`rejected`) is exposed to the agent's `loop.if` evaluation under the field name `decision`.
+- Re-routing on rejection is expressed via the existing `loop:` block (`ext:control-flow`); no new `on_approve`/`on_reject` fields are introduced.
 - `timeout` (reusing `ext:reliability`) defines how long to wait for a decision; on timeout, the orchestrator MUST treat the step as failed and apply `## On Failure`.
 - Without an interactive surface, an orchestrator MAY treat `human_review: true` as auto-reject; it MUST document this behavior.
 
@@ -625,7 +652,9 @@ Rules:
 
 - A string field MAY be either a string or a map of language codes (BCP-47) to strings.
 - The orchestrator MUST select a variant by frontmatter `default_lang`, falling back to `en`, and finally to the first defined language.
-- For agent bodies, `::: lang <code>` ... `:::` blocks delimit per-language sections; the orchestrator MUST select one before substitution.
+- For agent bodies, `::: lang <code>` ... `:::` blocks (Pandoc-style fenced divs) delimit per-language sections. The orchestrator MUST select exactly one block before applying `{{ ... }}` substitution; substitution rules (Core 2.4 and 2.6) apply unchanged inside the selected block.
+- If an agent body contains `::: lang :::` blocks AND free text outside any block, the free text is treated as a `default` block usable as the final fallback. If no `::: lang :::` blocks are present, the entire body is the (single) default.
+- If the chosen language has no matching block, the orchestrator MUST fall back in order: `default_lang` block → `en` block → the `default` (free-text) block, if any → the first defined block. If none of these exist, the orchestrator MUST stop with an error before the agent runs.
 
 ### 3.26 `ext:contracts` — paired input/output contracts
 
@@ -646,8 +675,9 @@ input_schema: ./schemas/article.json
 
 Rules:
 
-- Schema compatibility is checked statically (structural compatibility) at load time. The orchestrator MUST stop before any agent runs if the contract is violated.
-- At runtime, `output_schema` validation continues to apply per `ext:io-schema`. `input_schema` MAY additionally be validated when the consumer starts.
+- Static compatibility is defined narrowly: every property listed as `required` by the consumer's `input_schema` MUST appear in the producer's `output_schema` with a compatible primitive type (string/number/integer/boolean/array/object). Deeper checks (recursive `$ref`, `oneOf`/`anyOf`/`allOf`, conditional schemas) are best effort; an orchestrator MAY skip them and MUST NOT reject a file solely because such a check is undecidable.
+- If the narrow check fails, the orchestrator MUST stop before any agent runs.
+- At runtime, `output_schema` validation continues to apply per `ext:io-schema`. `input_schema` MAY additionally be validated when the consumer starts; on mismatch the consumer MUST be treated as failed.
 
 ### 3.27 `ext:prompt-templates` — external prompt files
 
@@ -684,9 +714,10 @@ fixtures: ./fixtures/run-2026-05-30/
 
 Rules:
 
-- `fixtures` is a path/URI to recorded run outputs. Layout is orchestrator-defined; a recommended layout is `<fixtures>/<agent_name>.json`.
-- When a fixture is present for an agent, the orchestrator MUST use it instead of invoking the model and MUST NOT incur cost for that agent.
+- `fixtures` is a path/URI to recorded run outputs. Recommended layout: `<fixtures>/<agent_name>.json` for single-shot agents, `<fixtures>/<agent_name>.<iteration>.json` (zero-based) for agents that loop via `ext:control-flow` or `ext:human-in-the-loop`.
+- When a fixture is present for an agent (and matches the iteration index, if applicable), the orchestrator MUST use it instead of invoking the model and MUST NOT incur cost for that agent.
 - When a fixture is missing, the orchestrator MUST fail the agent (no silent fallback to live calls in `dry_run`).
+- Replay support for `ext:streaming` is optional in v0.3; an orchestrator that does not support streaming replay MUST fail fast on a `streaming: true` producer rather than synthesize chunks.
 - `ext:eval` MAY run against replayed outputs.
 
 ---
@@ -700,20 +731,23 @@ Rules:
 
 ### 4.1 Conditional logic boundary (normative)
 
-Conditional logic in a PROJECT.md file is permitted **only** in two places:
+Conditional logic in a PROJECT.md file is permitted **only** in three places:
 
 1. `loop.if` (`ext:control-flow`) — controlling re-execution of an existing agent.
 2. `## On Failure` (`ext:reliability`) — reacting to an agent's failure.
+3. `human_review` (`ext:human-in-the-loop`) — reusing the `loop:` form, which is still case (1).
 
-Any other runtime-data-driven decision that would change **which** agents run, **in what order**, or **whether** an agent runs is out of scope for this spec. Specifically:
+This boundary is about the **composition** of the project — the set of agents and the existence of edges between them — not about how many times a loop iterates or whether streaming/HITL causes timing overlap. Loops, retries, streaming, and human-review pauses do **not** violate the boundary.
 
-- A PROJECT.md MUST NOT introduce fields like `skip_if`, `run_if`, `enabled_if`, `branch_on`, dynamic `wave` selection, or runtime-computed `after`.
+Any other runtime-data-driven decision that would change **which** agents exist, **whether** an agent runs at all, or the **edges** of the wave graph is out of scope for this spec. Specifically:
+
+- A PROJECT.md MUST NOT introduce fields that gate an agent's execution on runtime data — including but not limited to `skip_if`, `run_if`, `enabled_if`, `unless`, `cond`, `gate`, `predicate`, `only_when`, `branch_on`, dynamic `wave` selection, or runtime-computed `after`.
 - The set of agents and the wave graph MUST be statically determinable from the file alone, before any agent runs.
 - Logic that depends on agent output ("if the article is in English, skip translation"; "if no results, try a different source") MUST live **inside an agent's prompt**, not in the file structure. The agent decides and produces output; downstream agents adapt via their prompts.
 
 Rationale: the wave graph is the auditable contract of the project. Once runtime data can reshape it, PROJECT.md becomes a programming language and loses its review, plan, and replay properties.
 
-Orchestrators MUST reject unknown agent inline fields whose names suggest conditional gating of execution (e.g. `skip_if`, `run_if`, `enabled_if`) rather than silently ignoring them, even though section 2.5 otherwise mandates ignoring unknown fields. This is a deliberate exception to forward compatibility for this class of fields.
+Enforcement: per section 2.5(7), orchestrators MUST reject (not ignore) unknown agent inline fields whose names match the gating prefix pattern. This is a deliberate, class-level exception to forward compatibility — it closes the entire family of names rather than enumerating three.
 
 ---
 
