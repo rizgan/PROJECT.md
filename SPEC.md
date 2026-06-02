@@ -273,7 +273,39 @@ Adds `run_mode` to the frontmatter. Defined values: `dry_run`, `test`, `producti
 
 Adds `schedule` to the frontmatter. Value is a cron expression.
 
-### 3.12 `ext:status` — lifecycle state
+### 3.12 `ext:hosts` — agent placement
+
+Adds a top-level `## Hosts` section declaring named execution targets, and a `host:` field on agents selecting one (or several) of them.
+
+```markdown
+## Hosts
+- gpu_box:     ssh://ml@10.0.0.5
+- gpu_backup:  ssh://ml@10.0.0.6
+- scraper:     ssh://bot@worker-02.local
+- local:       local
+
+### collector
+wave: 1
+host: scraper
+
+### trainer
+wave: 2
+host: [gpu_box, gpu_backup, local]
+```
+
+Rules:
+
+- Each `## Hosts` entry is `name: target`. The `name` MUST match `[a-z][a-z0-9_]*` and is what `host:` on an agent references.
+- The `target` is a free-form string interpreted by the orchestrator. Recommended schemes: `local`, `ssh://user@host[:port]`, `http(s)://...`, or a bare hostname/IP.
+- An agent's `host:` is either a single name or a list of names. All referenced names MUST be declared in `## Hosts` (or be the literal `local`). Unknown names MUST cause the orchestrator to stop before the first agent runs.
+- When `host:` is a list, the orchestrator MUST treat it as an ordered failover preference: try the first host; if it is unreachable or the agent fails to start there, try the next; and so on. The agent runs on at most one host per attempt. If every host in the list is exhausted, the agent is considered failed (and `ext:reliability` policies, if any, then apply).
+- Failover applies to host-level failures (unreachable, refused, timed out before start). A successful agent run on host N is final — the orchestrator MUST NOT silently re-run it on host N+1 just because the agent's output was unsatisfactory; that is the job of `ext:reliability` / `ext:control-flow`.
+- If `host:` is omitted, the agent runs on the orchestrator's default host (implementation-defined, typically `local`).
+- Credentials for reaching a host MUST NOT be embedded as literals; use `ext:secrets` references (e.g. `ssh://ml@10.0.0.5?key={{ DEPLOY_KEY }}`). Resolution and transport are orchestrator-defined.
+- Passing outputs between agents on different hosts MUST be transparent to agents — the orchestrator is responsible for transferring data across waves regardless of placement.
+- `ext:constraints` fields (`allowed_paths`, `allowed_domains`) apply on the host where the agent actually runs.
+
+### 3.13 `ext:status` — lifecycle state
 
 Adds `status` to the frontmatter. Defined values: `active`, `paused`, `draft`. Orchestrators MUST skip files where `status != active`.
 
