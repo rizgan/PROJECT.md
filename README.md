@@ -19,7 +19,7 @@ If [AGENTS.md](https://agents.md) tells **one agent** how to behave in a repo, P
 
 ```markdown
 ---
-spec_version: 0.1
+spec_version: 0.2
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -70,7 +70,7 @@ PROJECT.md is that file.
 | Parallel execution                  | —         | —         | ✅            | ✅            | ✅            | ✅ (`wave`)   |
 | Explicit data dependencies          | —         | —         | implicit      | ✅ (edges)    | implicit      | ✅ (`after`)  |
 | Loops / retry on judge              | —         | —         | partial       | ✅            | ✅            | ✅ (ext)      |
-| Hierarchical agents                 | —         | —         | ✅            | ✅            | ✅            | ❌ (v0.1)     |
+| Hierarchical agents                 | —         | —         | ✅            | ✅            | ✅            | ❌ (v0.2)     |
 | Per-agent model & provider          | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
 | Tools declaration                   | partial   | partial   | ✅            | ✅            | ✅            | ✅ (ext)      |
 | Typed I/O (schema)                  | —         | —         | partial       | ✅            | ✅ (Pydantic) | ✅ (ext)      |
@@ -101,13 +101,14 @@ PROJECT.md is that file.
 
 ## Status
 
-`v0.1` — draft. Breaking changes possible until `v1.0`. Pin `spec_version` in your files.
+`v0.2` — draft. Breaking changes possible until `v1.0`. Pin `spec_version` in your files.
 
 ---
 
 ## Contributing
 
 Issues and PRs welcome — especially:
+
 - Real use-cases that expose gaps
 - Orchestrator implementations
 - Pushback on what should *not* be in the spec

@@ -1,5 +1,5 @@
 """
-Reference validator for PROJECT.md v0.1.
+Reference validator for PROJECT.md v0.2.
 
 Validates Core conformance (section 2 of SPEC.md). Extensions are recognised
 but not deeply validated; unknown fields and sections are accepted per the
@@ -22,9 +22,9 @@ from typing import Any
 
 import yaml
 
-SUPPORTED_SPEC_VERSIONS = {"0.1"}
+SUPPORTED_SPEC_VERSIONS = {"0.1", "0.2"}
 
-FILENAME_RE = re.compile(r"^PROJECT(-[A-Za-z0-9_-]+)?\.md$")
+FILENAME_RE = re.compile(r"^PROJECT(?:[-_][A-Za-z0-9_-]+)?\.md$")
 ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 AGENT_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 VAR_RE = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*\}\}")
@@ -57,7 +57,7 @@ class ValidationError(Exception):
 def parse(path: Path) -> Project:
     if not FILENAME_RE.match(path.name):
         raise ValidationError(
-            f"{path.name}: filename must match PROJECT.md or PROJECT-<id>.md"
+            f"{path.name}: filename must match PROJECT.md, PROJECT-<id>.md, or PROJECT_<id>.md"
         )
 
     text = path.read_text(encoding="utf-8")

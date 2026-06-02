@@ -1,5 +1,5 @@
 ---
-spec_version: 0.1
+spec_version: 0.2
 id: PROJECT-hello
 name: Hello pipeline
 topic: how transformer attention works

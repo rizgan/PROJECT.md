@@ -2,7 +2,7 @@
 
 ![PROJECT.md](../project.md.png)
 
-A small Python validator for PROJECT.md `v0.1` Core conformance.
+A small Python validator for PROJECT.md `v0.2` Core conformance.
 
 It is **not** an orchestrator — it only parses and validates files. Useful for CI and for catching mistakes before a real run.
 
@@ -24,7 +24,7 @@ Exit code `0` if all files are valid, `1` otherwise.
 
 ## What it checks
 
-- Filename matches `PROJECT.md` or `PROJECT-<id>.md`.
+- Filename matches `PROJECT.md`, `PROJECT-<id>.md`, or `PROJECT_<id>.md`.
 - YAML frontmatter is present and well-formed.
 - Required fields `spec_version`, `id`, `name` are set.
 - `spec_version` is supported.

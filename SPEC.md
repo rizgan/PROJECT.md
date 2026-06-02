@@ -1,6 +1,6 @@
 # PROJECT.md Specification
 
-**Version:** `0.1` (draft)
+**Version:** `0.2` (draft)
 **Status:** Breaking changes possible until `1.0`
 **License:** Apache-2.0
 
@@ -21,9 +21,10 @@ This document uses RFC 2119 keywords (MUST, SHOULD, MAY).
 
 A PROJECT.md file MUST match one of:
 
-```
+```text
 PROJECT.md
 PROJECT-<id>.md         e.g. PROJECT-01.md, PROJECT-news.md
+PROJECT_<id>.md         e.g. PROJECT_01.md, PROJECT_news.md
 ```
 
 Multiple files MAY coexist in one directory. An orchestrator MUST treat each file as an independent project.
@@ -37,7 +38,7 @@ A file consists of:
 
 ```markdown
 ---
-spec_version: 0.1
+spec_version: 0.2
 id: PROJECT-01
 name: My pipeline
 ---
@@ -65,7 +66,7 @@ This section is normative. A "PROJECT.md compatible" orchestrator MUST implement
 
 | Field          | Type   | Required | Description                                                              |
 | -------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| `spec_version` | string | yes      | Spec version this file targets. `0.1` for this version.                  |
+| `spec_version` | string | yes      | Spec version this file targets. `0.2` for this version.                  |
 | `id`           | string | yes      | Stable identifier. Allowed: `[A-Za-z0-9_-]+`.                            |
 | `name`         | string | yes      | Human-readable name.                                                     |
 
@@ -112,7 +113,7 @@ If a referenced variable is unresolved, the orchestrator MUST stop with an error
 
 ### 2.5 Conformance
 
-To claim "PROJECT.md `0.1` Core compatible", an orchestrator MUST:
+To claim "PROJECT.md `0.2` Core compatible", an orchestrator MUST:
 
 1. Parse files matching section 1.1.
 2. Validate Core frontmatter (2.1).
@@ -338,4 +339,4 @@ Tracked as issues in the repository. Notable:
 
 - Template language scope — should `{{ ... }}` support filters or stay literal-only?
 - Agent-to-agent direct messaging — needed in Core or stays in Extensions?
-- Streaming outputs between waves — out of scope for v0.1.
+- Streaming outputs between waves — out of scope for v0.2.
