@@ -122,7 +122,7 @@ To claim "PROJECT.md `0.3` Core compatible", an orchestrator MUST:
 5. Reject files declaring a `spec_version` it does not support.
 6. Ignore unknown **sections** and unknown **frontmatter** fields (forward compatibility — new features land via new sections and new frontmatter keys).
 7. Treat unknown **agent inline fields** as follows (agent inline fields are a hot zone where silent ignore is dangerous):
-   - A field whose name matches the gating prefix pattern `^(if_|when_|skip_|skip$|run_if$|enabled_|gate_|cond_|unless_|only_when_|predicate_)` MUST cause the orchestrator to stop with an error. See section 4.1.
+   - A field whose name matches the gating pattern `^(if|when|unless|cond|gate|predicate|only_when|skip|run_if|enabled)(_.*)?$` MUST cause the orchestrator to stop with an error. The pattern matches both bare names (`unless`, `gate`, `cond`, ...) and any suffixed variant (`skip_if`, `run_if_empty`, `gate_on_error`, ...). See section 4.1.
    - Any other unknown inline field SHOULD produce a warning. An orchestrator MAY accept it for forward compatibility, but MUST NOT assign it semantics it does not specify.
 
 ### 2.6 Variable namespaces
@@ -211,7 +211,9 @@ loop:
 
 If the agent's output matches `if`, the orchestrator re-runs `back_to` and the subsequent waves, up to `max_loops` times.
 
-The expression language for `if` is limited to: `<field> <op> <literal>` where `op ∈ {==, !=, >, <, >=, <=}`.
+`max_loops` MUST be specified when `loop:` is present; there is no default. Omitting it is a load-time error. The minimum meaningful value is `1` (one re-run).
+
+The expression language for `if` is limited to: `<field> <op> <literal>` where `op ∈ {==, !=, >, <, >=, <=}`. `<field>` resolves against the agent's output object (the agent whose `loop:` block this is). Extensions MAY contribute additional named fields to this scope (see e.g. `ext:human-in-the-loop`).
 
 ### 3.6 `ext:reliability` — timeouts, failure policy, quality checks
 
@@ -323,6 +325,8 @@ Rules:
 ### 3.13 `ext:status` — lifecycle state
 
 Adds `status` to the frontmatter. Defined values: `active`, `paused`, `draft`. Orchestrators MUST skip files where `status != active`.
+
+`paused` means "do not start new runs of this project". It is **not** related to `ext:checkpoints` resume — a paused project does not retain or consume checkpoint state by virtue of being paused, and resuming a previously checkpointed run is governed by `resume_from`, not by toggling `status`.
 
 ### 3.14 `ext:subagents` — hierarchy and dynamic sub-calls
 
@@ -556,6 +560,7 @@ Rules:
 - On resume **within the same run_id chain**, agents whose `idempotency_key` matches a successful prior result MUST be skipped and their stored output reused.
 - Idempotency keys MUST be deterministic given the same frontmatter and inputs.
 - Interaction with `ext:hosts`: by default, resume MUST replay each agent on the same host where its checkpoint was produced. If that host is unreachable, the orchestrator MAY fail the resume, OR (if it documents this capability) replicate state to a fallback host listed in the agent's `host:` failover list. Silent migration to a different host is not permitted.
+- Interaction with `ext:streaming`: a `streaming: true` producer's checkpoint is considered committed only after delivery of the final chunk (end-of-stream). A consumer with `consumes_stream:` MUST NOT be checkpointed at `after_agent` earlier than its producer; an `after_wave` checkpoint covering both is committed only when both have completed. On resume, the producer MUST be re-executed from scratch and the consumer MUST re-consume the resulting stream — partial-stream replay is not specified in v0.3. Orchestrators MAY buffer the full chunk sequence to enable mid-stream resume; if they do, this MUST be documented as an extension to this rule.
 
 ### 3.22 `ext:observability` — telemetry and tracing
 
@@ -597,7 +602,7 @@ loop:
 
 Rules:
 
-- An agent with `human_review: true` MUST pause after producing output and present `prompt_to_human` plus the agent's output to a human via an orchestrator-defined channel. The human's decision (e.g. `approved`/`rejected`) is exposed to the agent's `loop.if` evaluation under the field name `decision`.
+- An agent with `human_review: true` MUST pause after producing output and present `prompt_to_human` plus the agent's output to a human via an orchestrator-defined channel. The human's decision is recorded as a field named `decision` (typical values `approved` / `rejected`) on the agent's output object; it is therefore accessible to `loop.if` per `ext:control-flow`'s expression scope (3.5), but it is not a new template namespace and does not appear in `{{ ... }}` substitution.
 - Re-routing on rejection is expressed via the existing `loop:` block (`ext:control-flow`); no new `on_approve`/`on_reject` fields are introduced.
 - `timeout` (reusing `ext:reliability`) defines how long to wait for a decision; on timeout, the orchestrator MUST treat the step as failed and apply `## On Failure`.
 - Without an interactive surface, an orchestrator MAY treat `human_review: true` as auto-reject; it MUST document this behavior.
@@ -695,7 +700,7 @@ prompt_vars:
 Rules:
 
 - If `prompt` is set, the orchestrator MUST load the referenced file and use its contents as the agent's instruction body. The inline body, if any, MUST be ignored.
-- `prompt_vars` are merged with frontmatter fields for `{{ ... }}` substitution; on conflict, `prompt_vars` win.
+- `prompt_vars` participate in `{{ ... }}` substitution per the merge precedence defined in section 2.6: frontmatter → profile → memory → `prompt_vars` (later wins). On any conflict (frontmatter, profile, or memory), `prompt_vars` win.
 - Path resolution is relative to the PROJECT.md file. URLs are orchestrator-defined.
 
 ### 3.28 `ext:dry-run-replay` — replay against fixtures
