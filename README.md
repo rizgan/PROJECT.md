@@ -19,7 +19,7 @@ If [AGENTS.md](https://agents.md) tells **one agent** how to behave in a repo, P
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -103,7 +103,7 @@ PROJECT.md can optionally reference existing AGENTS.md and SKILL.md files throug
 
 ## Status
 
-`v0.4` — draft. Breaking changes possible until `v1.0`. Pin `spec_version` in your files.
+`v0.5` — draft. Breaking changes possible until `v1.0`. Pin `spec_version` in your files.
 
 ---
 

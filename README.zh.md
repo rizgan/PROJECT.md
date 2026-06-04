@@ -19,7 +19,7 @@
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -103,7 +103,7 @@ PROJECT.md 可以通过扩展可选地引用现有的 AGENTS.md 和 SKILL.md 文
 
 ## 状态
 
-`v0.4` — 草案。在 `v1.0` 之前可能有重大变更。请在文件中固定 `spec_version`。
+`v0.5` — 草案。在 `v1.0` 之前可能有重大变更。请在文件中固定 `spec_version`。
 
 ---
 

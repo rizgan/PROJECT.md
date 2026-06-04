@@ -1,5 +1,5 @@
 ---
-spec_version: 0.2
+spec_version: 0.5
 id: PROJECT_svdvs
 name: SVDVS pipeline
 topic: release notes

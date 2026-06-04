@@ -19,7 +19,7 @@
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -103,7 +103,7 @@ PROJECT.md는 확장을 통해 기존 AGENTS.md 및 SKILL.md 파일을 선택적
 
 ## 상태
 
-`v0.4` — 초안. `v1.0`까지 중대한 변경이 가능합니다. 파일에 `spec_version`을 고정하세요.
+`v0.5` — 초안. `v1.0`까지 중대한 변경이 가능합니다. 파일에 `spec_version`을 고정하세요.
 
 ---
 

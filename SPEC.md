@@ -1,6 +1,6 @@
 # PROJECT.md Specification
 
-**Version:** `0.4` (draft)
+**Version:** `0.5` (draft)
 **Status:** Breaking changes possible until `1.0`
 **License:** Apache-2.0
 
@@ -38,7 +38,7 @@ A file consists of:
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-01
 name: My pipeline
 ---
@@ -66,7 +66,7 @@ This section is normative. A "PROJECT.md compatible" orchestrator MUST implement
 
 | Field          | Type            | Required | Description                                                                   |
 | -------------- | --------------- | -------- | ----------------------------------------------------------------------------- |
-| `spec_version` | string          | yes      | Spec version this file targets. `0.4` for this version.                       |
+| `spec_version` | string          | yes      | Spec version this file targets. `0.5` for this version.                       |
 | `id`           | string          | yes      | Stable identifier. Allowed: `[A-Za-z0-9_-]+`.                                 |
 | `name`         | string          | yes      | Human-readable name.                                                          |
 | `extensions`   | list of strings | no       | Extension identifiers (e.g. `ext:tools`) that this file relies on. See 2.1.1. |
@@ -135,7 +135,7 @@ If a referenced variable is unresolved, the orchestrator MUST stop with an error
 
 ### 2.5 Conformance
 
-To claim "PROJECT.md `0.4` Core compatible", an orchestrator MUST:
+To claim "PROJECT.md `0.5` Core compatible", an orchestrator MUST:
 
 1. Parse files matching section 1.1.
 2. Validate Core frontmatter (2.1).
@@ -165,6 +165,23 @@ Layered substitution sources, when multiple are active, are merged in the follow
 This section is non-normative for Core conformance. Each extension is independent — an orchestrator MAY support any subset and MUST document which extensions it supports.
 
 Each extension below has an identifier (e.g. `ext:tools`). An orchestrator advertising support uses this identifier.
+
+### 3.0 External resources and trust boundary
+
+Several extensions allow PROJECT.md to reference external resources: schemas, profiles, prompts, fixtures, AGENTS.md-compatible instruction files, SKILL.md-compatible skill files, plugins, knowledge sources, and similar artifacts.
+
+Rules:
+
+- Any referenced external resource that affects prompts, capabilities, validation, execution, replay, or policy is part of the project's trusted input for that run.
+- An orchestrator MUST resolve and validate required external resources before the first agent runs, unless an extension explicitly defines lazy resolution.
+- Relative paths MUST be resolved relative to the PROJECT.md file that declares them.
+- Missing, unreadable, malformed, or unauthorized required resources MUST cause a clear load-time error before the first agent runs.
+- URL support is orchestrator-defined. If supported, remote resource loading MUST be documented and SHOULD be disabled by default or require explicit user/orchestrator policy approval.
+- Orchestrators MAY restrict external resource resolution by scheme, host, path, file size, symlink traversal, parent-directory traversal, content type, checksum, signature, or sandbox policy.
+- Credentials and secrets MUST NOT be embedded in resource paths or URLs. Use `ext:secrets` references or orchestrator-managed credentials instead.
+- External resources MUST NOT silently grant new tools, models, hosts, network access, filesystem access, budget, or constraints beyond what PROJECT.md declares or what orchestrator policy explicitly allows.
+- If an external resource requests additional capabilities, the orchestrator MUST either validate those capabilities against PROJECT.md and policy before the first agent runs, or reject the file with a clear error.
+- When multiple resources contribute instruction text or configuration to the same agent, the orchestrator MUST document the merge and precedence order.
 
 ### 3.1 `ext:io-schema` — typed agent I/O
 
@@ -365,7 +382,7 @@ Adds:
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-research
 name: Research
 ---
@@ -453,7 +470,7 @@ Adds `profile` and `profile_overlay` to the frontmatter. A profile is an externa
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-pharma
 name: Pharma scout
 profile: pharma-scouting
@@ -506,7 +523,7 @@ Adds finer-grained budget fields beyond `max_cost`:
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-01
 name: Daily news
 max_cost: 1.00 USD
@@ -564,7 +581,7 @@ Adds:
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-research
 name: Research
 checkpoint: after_wave
@@ -582,7 +599,7 @@ Rules:
 - On resume **within the same run_id chain**, agents whose `idempotency_key` matches a successful prior result MUST be skipped and their stored output reused.
 - Idempotency keys MUST be deterministic given the same frontmatter and inputs.
 - Interaction with `ext:hosts`: by default, resume MUST replay each agent on the same host where its checkpoint was produced. If that host is unreachable, the orchestrator MAY fail the resume, OR (if it documents this capability) replicate state to a fallback host listed in the agent's `host:` failover list. Silent migration to a different host is not permitted.
-- Interaction with `ext:streaming`: a `streaming: true` producer's checkpoint is considered committed only after delivery of the final chunk (end-of-stream). A consumer with `consumes_stream:` MUST NOT be checkpointed at `after_agent` earlier than its producer; an `after_wave` checkpoint covering both is committed only when both have completed. On resume, the producer MUST be re-executed from scratch and the consumer MUST re-consume the resulting stream — partial-stream replay is not specified in v0.4. Orchestrators MAY buffer the full chunk sequence to enable mid-stream resume; if they do, this MUST be documented as an extension to this rule.
+- Interaction with `ext:streaming`: a `streaming: true` producer's checkpoint is considered committed only after delivery of the final chunk (end-of-stream). A consumer with `consumes_stream:` MUST NOT be checkpointed at `after_agent` earlier than its producer; an `after_wave` checkpoint covering both is committed only when both have completed. On resume, the producer MUST be re-executed from scratch and the consumer MUST re-consume the resulting stream — partial-stream replay is not specified in v0.5. Orchestrators MAY buffer the full chunk sequence to enable mid-stream resume; if they do, this MUST be documented as an extension to this rule.
 
 ### 3.22 `ext:observability` — telemetry and tracing
 
@@ -656,7 +673,7 @@ Eligible fields: `name` (frontmatter), `prompt_to_human` (`ext:human-in-the-loop
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-pharma
 name:
   en: "Pharma scout"
@@ -731,7 +748,7 @@ Extends `ext:run-modes`. When `run_mode: dry_run`, the orchestrator MAY replay a
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-news
 name: News
 run_mode: dry_run
@@ -744,7 +761,7 @@ Rules:
 - `fixtures` is a path/URI to recorded run outputs. Recommended layout: `<fixtures>/<agent_name>.json` for single-shot agents, `<fixtures>/<agent_name>.<iteration>.json` (zero-based) for agents that loop via `ext:control-flow` or `ext:human-in-the-loop`.
 - When a fixture is present for an agent (and matches the iteration index, if applicable), the orchestrator MUST use it instead of invoking the model and MUST NOT incur cost for that agent.
 - When a fixture is missing, the orchestrator MUST fail the agent (no silent fallback to live calls in `dry_run`).
-- Replay support for `ext:streaming` is optional in v0.4; an orchestrator that does not support streaming replay MUST fail fast on a `streaming: true` producer rather than synthesize chunks.
+- Replay support for `ext:streaming` is optional in v0.5; an orchestrator that does not support streaming replay MUST fail fast on a `streaming: true` producer rather than synthesize chunks.
 - `ext:eval` MAY run against replayed outputs.
 
 ### 3.29 `ext:agent-instructions` — external agent instruction files

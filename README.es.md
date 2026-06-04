@@ -19,7 +19,7 @@ Si [AGENTS.md](https://agents.md) le dice a **un agente** cómo comportarse en u
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -103,7 +103,7 @@ PROJECT.md puede referenciar opcionalmente archivos AGENTS.md y SKILL.md existen
 
 ## Estado
 
-`v0.4` — borrador. Pueden haber cambios incompatibles hasta `v1.0`. Fije `spec_version` en sus archivos.
+`v0.5` — borrador. Pueden haber cambios incompatibles hasta `v1.0`. Fije `spec_version` en sus archivos.
 
 ---
 

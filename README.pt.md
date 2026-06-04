@@ -19,7 +19,7 @@ Se [AGENTS.md](https://agents.md) diz a **um agente** como se comportar em um re
 
 ```markdown
 ---
-spec_version: 0.4
+spec_version: 0.5
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -103,7 +103,7 @@ PROJECT.md pode referenciar opcionalmente arquivos AGENTS.md e SKILL.md existent
 
 ## Status
 
-`v0.4` — rascunho. Mudanças incompatíveis são possíveis até `v1.0`. Fixe `spec_version` em seus arquivos.
+`v0.5` — rascunho. Mudanças incompatíveis são possíveis até `v1.0`. Fixe `spec_version` em seus arquivos.
 
 ---
 

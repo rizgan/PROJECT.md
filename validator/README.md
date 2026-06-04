@@ -2,7 +2,7 @@
 
 ![PROJECT.md](../project.md.png)
 
-A small Python validator for PROJECT.md `v0.2` Core conformance.
+A small Python validator for PROJECT.md `v0.5` Core conformance.
 
 It is **not** an orchestrator — it only parses and validates files. Useful for CI and for catching mistakes before a real run.
 
@@ -15,8 +15,8 @@ pip install pyyaml
 ## Use
 
 ```bash
-python validate.py ../examples/minimal.md
-python validate.py ../examples/news-pipeline.md
+python validate.py ../examples/PROJECT-minimal.md
+python validate.py ../examples/PROJECT-news.md
 python validate.py ../examples/*.md
 ```
 
