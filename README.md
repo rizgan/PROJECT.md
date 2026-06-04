@@ -19,7 +19,7 @@ If [AGENTS.md](https://agents.md) tells **one agent** how to behave in a repo, P
 
 ```markdown
 ---
-spec_version: 0.2
+spec_version: 0.4
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -70,7 +70,7 @@ PROJECT.md is that file.
 | Parallel execution                  | —         | —         | ✅            | ✅            | ✅            | ✅ (`wave`)   |
 | Explicit data dependencies          | —         | —         | implicit      | ✅ (edges)    | implicit      | ✅ (`after`)  |
 | Loops / retry on judge              | —         | —         | partial       | ✅            | ✅            | ✅ (ext)      |
-| Hierarchical agents                 | —         | —         | ✅            | ✅            | ✅            | ❌ (v0.2)     |
+| Hierarchical agents                 | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
 | Per-agent model & provider          | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
 | Tools declaration                   | partial   | partial   | ✅            | ✅            | ✅            | ✅ (ext)      |
 | Typed I/O (schema)                  | —         | —         | partial       | ✅            | ✅ (Pydantic) | ✅ (ext)      |
@@ -85,6 +85,8 @@ PROJECT.md is that file.
 | Human-readable diff in PR review    | ✅        | ✅        | ✅            | ❌            | ❌            | ✅            |
 
 **Read it as:** AGENTS.md and SKILL.md describe *one* unit (an agent, a skill). CrewAI, LangGraph and ADK describe *pipelines* but in code or a framework-specific schema. PROJECT.md is the only format that is both **declarative Markdown** and **framework-independent** for the pipeline layer.
+
+PROJECT.md can optionally reference existing AGENTS.md and SKILL.md files through extensions, while still working perfectly well without them.
 
 > IDE-specific files like `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules` are intentionally omitted — they share AGENTS.md's scope (single agent, one repo) and only differ in which tool reads them.
 
@@ -101,7 +103,7 @@ PROJECT.md is that file.
 
 ## Status
 
-`v0.2` — draft. Breaking changes possible until `v1.0`. Pin `spec_version` in your files.
+`v0.4` — draft. Breaking changes possible until `v1.0`. Pin `spec_version` in your files.
 
 ---
 

@@ -19,7 +19,7 @@
 
 ```markdown
 ---
-spec_version: 0.1
+spec_version: 0.4
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -70,7 +70,7 @@ PROJECT.md가 바로 그 파일입니다.
 | 병렬 실행                             | —         | —         | ✅            | ✅            | ✅            | ✅ (`wave`)   |
 | 명시적 데이터 의존성                  | —         | —         | 암시적        | ✅ (엣지)     | 암시적        | ✅ (`after`)  |
 | 루프 / 판정자 재시도                  | —         | —         | 부분적        | ✅            | ✅            | ✅ (ext)      |
-| 계층형 에이전트                       | —         | —         | ✅            | ✅            | ✅            | ❌ (v0.1)     |
+| 계층형 에이전트                       | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
 | 에이전트별 모델 및 공급자             | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
 | 도구 선언                             | 부분적    | 부분적    | ✅            | ✅            | ✅            | ✅ (ext)      |
 | 타입드 I/O (스키마)                   | —         | —         | 부분적        | ✅            | ✅ (Pydantic) | ✅ (ext)      |
@@ -85,6 +85,8 @@ PROJECT.md가 바로 그 파일입니다.
 | PR 리뷰에서 사람이 읽을 수 있는 diff  | ✅        | ✅        | ✅            | ❌            | ❌            | ✅            |
 
 **읽는 방법:** AGENTS.md와 SKILL.md는 *하나의* 단위(에이전트, 스킬)를 설명합니다. CrewAI, LangGraph, ADK는 코드나 프레임워크 특정 스키마로 *파이프라인*을 설명합니다. PROJECT.md는 파이프라인 레이어에서 **선언적 Markdown**이자 **프레임워크 독립적**인 유일한 형식입니다.
+
+PROJECT.md는 확장을 통해 기존 AGENTS.md 및 SKILL.md 파일을 선택적으로 참조할 수 있지만, 그것들 없이도 완전히 작동합니다.
 
 > `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules`과 같은 IDE 특정 파일은 의도적으로 제외되었습니다 — 이들은 AGENTS.md와 같은 범위(단일 에이전트, 하나의 저장소)를 공유하며, 어떤 도구가 읽는지만 다릅니다.
 
@@ -101,7 +103,7 @@ PROJECT.md가 바로 그 파일입니다.
 
 ## 상태
 
-`v0.1` — 초안. `v1.0`까지 중대한 변경이 가능합니다. 파일에 `spec_version`을 고정하세요.
+`v0.4` — 초안. `v1.0`까지 중대한 변경이 가능합니다. 파일에 `spec_version`을 고정하세요.
 
 ---
 

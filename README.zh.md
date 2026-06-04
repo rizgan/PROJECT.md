@@ -19,7 +19,7 @@
 
 ```markdown
 ---
-spec_version: 0.1
+spec_version: 0.4
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -70,7 +70,7 @@ PROJECT.md 就是那个文件。
 | 并行执行                           | —         | —         | ✅            | ✅            | ✅            | ✅ (`wave`)   |
 | 显式数据依赖                       | —         | —         | 隐式          | ✅ (边)       | 隐式          | ✅ (`after`)  |
 | 循环 / 裁判重试                    | —         | —         | 部分          | ✅            | ✅            | ✅ (扩展)     |
-| 层次化智能体                       | —         | —         | ✅            | ✅            | ✅            | ❌ (v0.1)     |
+| 层次化智能体                       | —         | —         | ✅            | ✅            | ✅            | ✅ (扩展)     |
 | 每智能体模型和提供商               | —         | —         | ✅            | ✅            | ✅            | ✅ (扩展)     |
 | 工具声明                           | 部分      | 部分      | ✅            | ✅            | ✅            | ✅ (扩展)     |
 | 类型化 I/O（模式）                 | —         | —         | 部分          | ✅            | ✅ (Pydantic) | ✅ (扩展)     |
@@ -85,6 +85,8 @@ PROJECT.md 就是那个文件。
 | PR 审查中人类可读的差异            | ✅        | ✅        | ✅            | ❌            | ❌            | ✅            |
 
 **解读：** AGENTS.md 和 SKILL.md 描述*一个*单元（一个智能体、一项技能）。CrewAI、LangGraph 和 ADK 以代码或框架特定模式描述*管道*。PROJECT.md 是唯一既**声明式 Markdown** 又**框架无关**的管道层格式。
+
+PROJECT.md 可以通过扩展可选地引用现有的 AGENTS.md 和 SKILL.md 文件，同时也可以完全不使用它们。
 
 > IDE 特定文件如 `CLAUDE.md`、`GEMINI.md`、`.cursorrules`、`.github/copilot-instructions.md`、`.windsurfrules`、`.clinerules` 被有意省略——它们与 AGENTS.md 的范围相同（单一智能体，一个仓库），只是读取工具不同。
 
@@ -101,7 +103,7 @@ PROJECT.md 就是那个文件。
 
 ## 状态
 
-`v0.1` — 草案。在 `v1.0` 之前可能有重大变更。请在文件中固定 `spec_version`。
+`v0.4` — 草案。在 `v1.0` 之前可能有重大变更。请在文件中固定 `spec_version`。
 
 ---
 

@@ -1,6 +1,6 @@
 # PROJECT.md Specification
 
-**Version:** `0.3` (draft)
+**Version:** `0.4` (draft)
 **Status:** Breaking changes possible until `1.0`
 **License:** Apache-2.0
 
@@ -38,7 +38,7 @@ A file consists of:
 
 ```markdown
 ---
-spec_version: 0.3
+spec_version: 0.4
 id: PROJECT-01
 name: My pipeline
 ---
@@ -66,7 +66,7 @@ This section is normative. A "PROJECT.md compatible" orchestrator MUST implement
 
 | Field          | Type            | Required | Description                                                                   |
 | -------------- | --------------- | -------- | ----------------------------------------------------------------------------- |
-| `spec_version` | string          | yes      | Spec version this file targets. `0.3` for this version.                       |
+| `spec_version` | string          | yes      | Spec version this file targets. `0.4` for this version.                       |
 | `id`           | string          | yes      | Stable identifier. Allowed: `[A-Za-z0-9_-]+`.                                 |
 | `name`         | string          | yes      | Human-readable name.                                                          |
 | `extensions`   | list of strings | no       | Extension identifiers (e.g. `ext:tools`) that this file relies on. See 2.1.1. |
@@ -135,7 +135,7 @@ If a referenced variable is unresolved, the orchestrator MUST stop with an error
 
 ### 2.5 Conformance
 
-To claim "PROJECT.md `0.3` Core compatible", an orchestrator MUST:
+To claim "PROJECT.md `0.4` Core compatible", an orchestrator MUST:
 
 1. Parse files matching section 1.1.
 2. Validate Core frontmatter (2.1).
@@ -365,7 +365,7 @@ Adds:
 
 ```markdown
 ---
-spec_version: 0.3
+spec_version: 0.4
 id: PROJECT-research
 name: Research
 ---
@@ -453,7 +453,7 @@ Adds `profile` and `profile_overlay` to the frontmatter. A profile is an externa
 
 ```markdown
 ---
-spec_version: 0.3
+spec_version: 0.4
 id: PROJECT-pharma
 name: Pharma scout
 profile: pharma-scouting
@@ -506,7 +506,7 @@ Adds finer-grained budget fields beyond `max_cost`:
 
 ```markdown
 ---
-spec_version: 0.3
+spec_version: 0.4
 id: PROJECT-01
 name: Daily news
 max_cost: 1.00 USD
@@ -564,7 +564,7 @@ Adds:
 
 ```markdown
 ---
-spec_version: 0.3
+spec_version: 0.4
 id: PROJECT-research
 name: Research
 checkpoint: after_wave
@@ -582,7 +582,7 @@ Rules:
 - On resume **within the same run_id chain**, agents whose `idempotency_key` matches a successful prior result MUST be skipped and their stored output reused.
 - Idempotency keys MUST be deterministic given the same frontmatter and inputs.
 - Interaction with `ext:hosts`: by default, resume MUST replay each agent on the same host where its checkpoint was produced. If that host is unreachable, the orchestrator MAY fail the resume, OR (if it documents this capability) replicate state to a fallback host listed in the agent's `host:` failover list. Silent migration to a different host is not permitted.
-- Interaction with `ext:streaming`: a `streaming: true` producer's checkpoint is considered committed only after delivery of the final chunk (end-of-stream). A consumer with `consumes_stream:` MUST NOT be checkpointed at `after_agent` earlier than its producer; an `after_wave` checkpoint covering both is committed only when both have completed. On resume, the producer MUST be re-executed from scratch and the consumer MUST re-consume the resulting stream — partial-stream replay is not specified in v0.3. Orchestrators MAY buffer the full chunk sequence to enable mid-stream resume; if they do, this MUST be documented as an extension to this rule.
+- Interaction with `ext:streaming`: a `streaming: true` producer's checkpoint is considered committed only after delivery of the final chunk (end-of-stream). A consumer with `consumes_stream:` MUST NOT be checkpointed at `after_agent` earlier than its producer; an `after_wave` checkpoint covering both is committed only when both have completed. On resume, the producer MUST be re-executed from scratch and the consumer MUST re-consume the resulting stream — partial-stream replay is not specified in v0.4. Orchestrators MAY buffer the full chunk sequence to enable mid-stream resume; if they do, this MUST be documented as an extension to this rule.
 
 ### 3.22 `ext:observability` — telemetry and tracing
 
@@ -656,7 +656,7 @@ Eligible fields: `name` (frontmatter), `prompt_to_human` (`ext:human-in-the-loop
 
 ```markdown
 ---
-spec_version: 0.3
+spec_version: 0.4
 id: PROJECT-pharma
 name:
   en: "Pharma scout"
@@ -731,7 +731,7 @@ Extends `ext:run-modes`. When `run_mode: dry_run`, the orchestrator MAY replay a
 
 ```markdown
 ---
-spec_version: 0.3
+spec_version: 0.4
 id: PROJECT-news
 name: News
 run_mode: dry_run
@@ -744,10 +744,74 @@ Rules:
 - `fixtures` is a path/URI to recorded run outputs. Recommended layout: `<fixtures>/<agent_name>.json` for single-shot agents, `<fixtures>/<agent_name>.<iteration>.json` (zero-based) for agents that loop via `ext:control-flow` or `ext:human-in-the-loop`.
 - When a fixture is present for an agent (and matches the iteration index, if applicable), the orchestrator MUST use it instead of invoking the model and MUST NOT incur cost for that agent.
 - When a fixture is missing, the orchestrator MUST fail the agent (no silent fallback to live calls in `dry_run`).
-- Replay support for `ext:streaming` is optional in v0.3; an orchestrator that does not support streaming replay MUST fail fast on a `streaming: true` producer rather than synthesize chunks.
+- Replay support for `ext:streaming` is optional in v0.4; an orchestrator that does not support streaming replay MUST fail fast on a `streaming: true` producer rather than synthesize chunks.
 - `ext:eval` MAY run against replayed outputs.
 
-### 3.29 Compatibility matrix
+### 3.29 `ext:agent-instructions` — external agent instruction files
+
+Allows PROJECT.md to reference existing AGENTS.md-compatible instruction files without making them part of Core.
+
+Adds a top-level `## Agent Instructions` section:
+
+```markdown
+## Agent Instructions
+- path: ./AGENTS.md
+  applies_to: "*"
+- path: ./agents/reviewer/AGENTS.md
+  applies_to: [reviewer]
+```
+
+Rules:
+
+- Each entry MUST have `path`. It MAY have `applies_to`.
+- `applies_to` is either the literal `"*"` or a list of agent names. If omitted, it defaults to `"*"`.
+- Paths are resolved relative to the PROJECT.md file. URL support is orchestrator-defined.
+- Unknown agent names in `applies_to` MUST cause the orchestrator to stop before the first agent runs.
+- The orchestrator MUST load matching instruction files and supply them to the selected agents as instruction context. The exact role mapping (system, developer, prompt prefix, or equivalent) is orchestrator-defined and MUST be documented.
+- If multiple instruction files match an agent, the orchestrator MUST apply them in declaration order.
+- An orchestrator that supports this extension SHOULD accept plain Markdown AGENTS.md-style files. If it requires a stricter AGENTS.md variant, it MUST document that requirement.
+- A PROJECT.md file MUST remain valid without this extension unless it declares `ext:agent-instructions` or uses the `## Agent Instructions` section.
+
+### 3.30 `ext:skills` — reusable skill manifests
+
+Allows PROJECT.md to reference existing SKILL.md-compatible skill files and assign them to agents.
+
+Adds a top-level `## Skills` section and a `skills:` field on agents:
+
+```markdown
+## Skills
+- id: web_research
+  path: ./skills/web-research/SKILL.md
+- id: citation_check
+  path: ./skills/citation-check/SKILL.md
+
+### researcher
+wave: 1
+skills: [web_research]
+
+Find relevant sources.
+
+### reviewer
+wave: 2
+after: researcher
+skills: [citation_check]
+
+Review the sources and flag weak claims.
+```
+
+Rules:
+
+- Each skill entry MUST have `id` and `path`.
+- Skill `id` MUST match `[a-z][a-z0-9_]*`.
+- Paths are resolved relative to the PROJECT.md file. URL support is orchestrator-defined.
+- An agent's `skills:` value is a string or list of skill IDs. All referenced skill IDs MUST be declared in `## Skills`.
+- Unknown skill IDs MUST cause the orchestrator to stop before the first agent runs.
+- The orchestrator MUST load selected skill files and make them available to the agent as reusable task instructions or callable capabilities. Invocation mechanics are orchestrator-defined and MUST be documented.
+- A skill file MAY describe required tools, models, knowledge, or constraints, but those requirements do not automatically modify the PROJECT.md graph. If an orchestrator imports such requirements, it MUST validate them before the first agent runs and MUST document the merge rules.
+- An orchestrator that supports this extension SHOULD accept plain Markdown SKILL.md-style files. If it requires a stricter SKILL.md variant, it MUST document that requirement.
+- A PROJECT.md file MUST remain valid without this extension unless it declares `ext:skills`, uses the `## Skills` section, or uses an agent `skills:` field.
+
+### 3.31 Compatibility matrix
 
 This subsection is **informative**. It summarizes interactions between extensions that are stated normatively in the individual rules above. If the matrix and the prose disagree, the prose wins.
 
@@ -781,6 +845,9 @@ Legend:
 | `ext:dry-run-replay`    | extends        | `ext:run-modes`                                                | 3.28          |
 | `ext:dry-run-replay`    | interacts      | `ext:control-flow` (per-iteration fixtures)                    | 3.28          |
 | `ext:dry-run-replay`    | interacts      | `ext:human-in-the-loop` (loop iterations)                      | 3.28          |
+| `ext:agent-instructions`| interacts      | Core `## Agents` (per-agent instruction context)               | 3.29          |
+| `ext:skills`            | interacts      | Core `## Agents` (per-agent skill selection)                   | 3.30          |
+| `ext:skills`            | interacts      | `ext:tools`, `ext:models`, `ext:rag`, `ext:constraints`         | 3.30          |
 | `ext:memory`            | extends        | Core 2.4 / 2.6 (adds `memory.` namespace)                      | 2.6 / 3.8     |
 | `ext:prompt-templates`  | interacts      | 2.6 substitution merge order                                   | 2.6 / 3.27    |
 | `ext:subagents`         | interacts      | Core 2.3 (ad-hoc invocation alongside waves)                   | 3.14          |

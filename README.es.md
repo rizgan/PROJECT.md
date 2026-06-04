@@ -19,7 +19,7 @@ Si [AGENTS.md](https://agents.md) le dice a **un agente** cómo comportarse en u
 
 ```markdown
 ---
-spec_version: 0.1
+spec_version: 0.4
 id: PROJECT-01
 name: Hello pipeline
 ---
@@ -70,7 +70,7 @@ PROJECT.md es ese archivo.
 | Ejecución paralela                      | —         | —         | ✅            | ✅            | ✅            | ✅ (`wave`)   |
 | Dependencias de datos explícitas        | —         | —         | implícitas    | ✅ (aristas)  | implícitas    | ✅ (`after`)  |
 | Bucles / reintento por juez             | —         | —         | parcial       | ✅            | ✅            | ✅ (ext)      |
-| Agentes jerárquicos                     | —         | —         | ✅            | ✅            | ✅            | ❌ (v0.1)     |
+| Agentes jerárquicos                     | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
 | Modelo y proveedor por agente           | —         | —         | ✅            | ✅            | ✅            | ✅ (ext)      |
 | Declaración de herramientas             | parcial   | parcial   | ✅            | ✅            | ✅            | ✅ (ext)      |
 | I/O tipado (esquema)                    | —         | —         | parcial       | ✅            | ✅ (Pydantic) | ✅ (ext)      |
@@ -85,6 +85,8 @@ PROJECT.md es ese archivo.
 | Diff legible por humanos en PR review   | ✅        | ✅        | ✅            | ❌            | ❌            | ✅            |
 
 **Léalo así:** AGENTS.md y SKILL.md describen *una* unidad (un agente, una habilidad). CrewAI, LangGraph y ADK describen *pipelines* pero en código o esquema específico del framework. PROJECT.md es el único formato que es tanto **Markdown declarativo** como **independiente del framework** para la capa de pipeline.
+
+PROJECT.md puede referenciar opcionalmente archivos AGENTS.md y SKILL.md existentes mediante extensiones, pero funciona perfectamente sin ellos.
 
 > Los archivos específicos de IDE como `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md`, `.windsurfrules`, `.clinerules` se omiten intencionalmente — comparten el alcance de AGENTS.md (agente único, un repositorio) y solo difieren en qué herramienta los lee.
 
@@ -101,7 +103,7 @@ PROJECT.md es ese archivo.
 
 ## Estado
 
-`v0.1` — borrador. Pueden haber cambios incompatibles hasta `v1.0`. Fije `spec_version` en sus archivos.
+`v0.4` — borrador. Pueden haber cambios incompatibles hasta `v1.0`. Fije `spec_version` en sus archivos.
 
 ---
 
