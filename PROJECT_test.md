@@ -1,11 +1,11 @@
 ---
 spec_version: 0.5
-id: PROJECT_svdvs
-name: SVDVS pipeline
+id: PROJECT_test
+name: test pipeline
 topic: release notes
 ---
 
-# PROJECT_svdvs
+# PROJECT_test
 
 <!-- markdownlint-disable MD022 -->
 
