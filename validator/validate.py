@@ -1,5 +1,5 @@
 """
-Reference validator for PROJECT.md v0.2.
+Reference validator for PROJECT.md v0.5.
 
 Validates Core conformance (section 2 of SPEC.md). Extensions are recognised
 but not deeply validated; unknown fields and sections are accepted per the
@@ -22,13 +22,16 @@ from typing import Any
 
 import yaml
 
-SUPPORTED_SPEC_VERSIONS = {"0.1", "0.2"}
+SUPPORTED_SPEC_VERSIONS = {"0.1", "0.2", "0.3", "0.4", "0.5"}
 
 FILENAME_RE = re.compile(r"^PROJECT(?:[-_][A-Za-z0-9_-]+)?\.md$")
 ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 AGENT_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 VAR_RE = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*\}\}")
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)$", re.DOTALL)
+GATING_FIELD_RE = re.compile(
+    r"^(if|when|unless|cond|gate|predicate|only_when|skip|run_if|enabled)(_.*)?$"
+)
 
 
 @dataclass
@@ -174,6 +177,12 @@ def _parse_agents(section_body: str, fname: str) -> list[Agent]:
             )
 
         extra = {k: v for k, v in inline.items() if k not in {"wave", "after"}}
+        for field_name in extra:
+            if GATING_FIELD_RE.match(field_name):
+                raise ValidationError(
+                    f"{fname}: agent '{name}' uses unsupported runtime gating field "
+                    f"'{field_name}'"
+                )
         agents.append(Agent(name=name, wave=wave, after=after, extra_fields=extra, body=body))
     return agents
 

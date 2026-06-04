@@ -31,9 +31,10 @@ Exit code `0` if all files are valid, `1` otherwise.
 - `## Agents` section exists and has at least one agent.
 - Each agent has a valid name and `wave: <int ≥ 1>`.
 - `after:` references existing agents in earlier waves.
+- Unknown runtime-gating inline fields such as `skip_if`, `run_if`, and `unless` are rejected.
 - `{{ variable }}` references resolve to frontmatter fields, secrets, or memory keys.
 
-Unknown sections and unknown fields are accepted (forward compatibility).
+Unknown sections and non-gating unknown fields are accepted (forward compatibility).
 
 ## Limits
 
