@@ -54,6 +54,8 @@ Instruction text for the agent.
 
 Section names are case-insensitive and matched on the heading text (`## Agents`, `## agents`, `## AGENTS` are equivalent).
 
+This case-insensitivity applies **only** to `##` section headings. Frontmatter keys and agent inline-field names are YAML keys and are case-sensitive: `wave` and `Wave` are not the same field, and `Wave: 2` is an unknown inline field handled per 2.5(7), not a synonym for `wave`.
+
 Unknown sections MUST be ignored by the orchestrator (forward compatibility).
 
 ---
@@ -153,12 +155,14 @@ To claim "PROJECT.md `0.5` Core compatible" (any `0.5.x`), an orchestrator MUST:
 
 Core template substitution (2.4) resolves names against frontmatter fields. Extensions MAY introduce additional top-level namespaces in `{{ ns.key }}` form (e.g. `{{ memory.x }}` from `ext:memory`, `{{ observability.timestamp }}` from `ext:observability`). Bare extension-provided names (without an `ns.` prefix) are not permitted — every extension-supplied variable MUST live under its own namespace to avoid collisions with frontmatter fields. An orchestrator MUST resolve namespaces only for extensions it supports; an unresolved namespace MUST be treated as an unresolved variable per 2.4.
 
-Layered substitution sources, when multiple are active, are merged in the following precedence (later wins):
+Layered substitution sources, when multiple are active, are merged in the following precedence (later wins, i.e. the most specific layer is applied last). This ordering is authoritative; `ext:profiles` (3.17) and `ext:prompt-templates` (3.27) refer back to it and MUST NOT restate a different order:
 
-1. Frontmatter fields (Core).
-2. Profile-supplied fields (`ext:profiles`), once resolved.
+1. Profile-supplied fields (`ext:profiles`), once resolved — the base layer. Within this layer, `profile` is applied first and `profile_overlay` second (per 3.17).
+2. Frontmatter fields (Core) — these override profile-supplied values field-by-field.
 3. Memory namespace (`ext:memory`), under `memory.`.
 4. Per-agent `prompt_vars` (`ext:prompt-templates`).
+
+Rationale: a profile carries shared defaults; the PROJECT.md frontmatter is the more specific, file-local declaration and therefore wins on conflict. This matches the layer order defined normatively in 3.17.
 
 ---
 
@@ -276,6 +280,8 @@ timeout: 2m
 - collector: retry after 30s, max 3 attempts
 ```
 
+The `action` portion of an `## On Failure` entry is a free-form phrase in v0.5; only the leading action keyword (`retry`, `skip`, `stop`, `notify`, `fallback`) is normative, and the orchestrator MUST recognize it. Any parameters after the keyword (e.g. `after 30s`, `max 3 attempts`) are orchestrator-interpreted hints and MUST NOT change the meaning of the keyword. An orchestrator that does not understand a parameter MUST still honor the base action. A formal parameter grammar is deferred to a later spec version.
+
 ### 3.7 `ext:constraints` — guardrails
 
 Adds top-level fields:
@@ -358,6 +364,7 @@ Rules:
 - An agent's `host:` is either a single name or a list of names. All referenced names MUST be declared in `## Hosts` (or be the literal `local`). Unknown names MUST cause the orchestrator to stop before the first agent runs.
 - When `host:` is a list, the orchestrator MUST treat it as an ordered failover preference: try the first host; if it is unreachable or the agent fails to start there, try the next; and so on. The agent runs on at most one host per attempt. If every host in the list is exhausted, the agent is considered failed (and `ext:reliability` policies, if any, then apply).
 - Failover applies to host-level failures (unreachable, refused, timed out before start). A successful agent run on host N is final — the orchestrator MUST NOT silently re-run it on host N+1 just because the agent's output was unsatisfactory; that is the job of `ext:reliability` / `ext:control-flow`.
+- Interaction with `ext:reliability` retry: when a `## On Failure` policy retries an agent that has a `host:` failover list, each retry attempt MUST begin again at the first host in the list (the full failover sequence is re-evaluated per retry), unless the orchestrator documents a different, more specific policy. Host-failover exhaustion counts as a single agent failure for the purpose of `## On Failure` attempt counting — trying every host in the list is one failed attempt, not one per host.
 - If `host:` is omitted, the agent runs on the orchestrator's default host (implementation-defined, typically `local`).
 - Credentials for reaching a host MUST NOT be embedded as literals; use `ext:secrets` references (e.g. `ssh://ml@10.0.0.5?key={{ DEPLOY_KEY }}`). Resolution and transport are orchestrator-defined.
 - Passing outputs between agents on different hosts MUST be transparent to agents — the orchestrator is responsible for transferring data across waves regardless of placement.
@@ -433,7 +440,7 @@ knowledge: [pharma_papers, web_cache]
 
 Rules:
 
-- Each entry has a `name` matching `[a-z][a-z0-9_]*` and a body with at least `type` and `source`.
+- Each entry's mapping key is its name and MUST match `[a-z][a-z0-9_]*`; the entry body MUST contain at least `type` and `source`. (The name is the YAML key, e.g. `pharma_papers:`, not a `name:` field inside the body.)
 - `type` values defined by this spec: `rag`. Orchestrators MAY recognize additional types.
 - `source` is a free-form URI or path; resolution is orchestrator-defined.
 - Knowledge is supplied to the agent as retrieval context, not as a tool call. An agent MUST NOT need to declare a tool to use its knowledge sources.
@@ -461,7 +468,7 @@ registry: ./examples/
 
 Rules:
 
-- A tool entry MAY be either a string (as in `ext:tools`) or an object with `id` (required), and optional `version`, `source`, `requires`.
+- A tool entry MAY be either a string (as in `ext:tools`) or an object with `id` (required), and optional `version`, `source`, `requires`. The object form is defined by this extension: a file that uses any object-form tool entry relies on `ext:plugins` and MUST declare it per 2.1.1, so that an orchestrator supporting only `ext:tools` fails the feasibility check rather than silently mis-parsing the object.
 - `requires` lists capability names. The orchestrator MUST refuse to start the run if any required capability is unavailable.
 - `version` is a semver range string. Resolution and execution sandbox (e.g. WASM) are orchestrator-defined.
 - `## Plugins.registry` is a path or URI used to resolve `source: registry:<id>` references.
@@ -482,7 +489,7 @@ profile_overlay: dev
 
 Rules:
 
-- The orchestrator MUST resolve `profile` and `profile_overlay` **before** validating Core fields (2.1). Layer order: `profile` first, then `profile_overlay`, then PROJECT.md frontmatter and sections. Later layers override earlier ones field-by-field.
+- The orchestrator MUST resolve `profile` and `profile_overlay` **before** validating Core fields (2.1). Layer order: `profile` first, then `profile_overlay`, then PROJECT.md frontmatter and sections. Later layers override earlier ones field-by-field. This is the same ordering used for template substitution in 2.6 (profile is the base layer; frontmatter overrides it); the two MUST NOT diverge.
 - Profile resolution (lookup path, format) is orchestrator-defined.
 - An unresolved `profile` or `profile_overlay` MUST cause the orchestrator to stop before the first agent runs.
 - Profiles MAY supply Core-required fields (e.g. `name`) and extension fields (`provider`, `model`, `tools`, `secrets`, `constraints`, ...). A PROJECT.md whose Core validity depends on a profile is therefore **not portable** to an orchestrator that lacks that profile; the author SHOULD make this dependency explicit (e.g. encode the profile name in `id`, document it in the body) and the orchestrator MUST report a clear error rather than silently substituting defaults.
@@ -742,7 +749,7 @@ prompt_vars:
 Rules:
 
 - If `prompt` is set, the orchestrator MUST load the referenced file and use its contents as the agent's instruction body. The inline body, if any, MUST be ignored.
-- `prompt_vars` participate in `{{ ... }}` substitution per the merge precedence defined in section 2.6: frontmatter → profile → memory → `prompt_vars` (later wins). On any conflict (frontmatter, profile, or memory), `prompt_vars` win.
+- `prompt_vars` participate in `{{ ... }}` substitution per the merge precedence defined in section 2.6: profile → frontmatter → memory → `prompt_vars` (later wins). On any conflict (profile, frontmatter, or memory), `prompt_vars` win.
 - Path resolution is relative to the PROJECT.md file. URLs are orchestrator-defined.
 
 ### 3.28 `ext:dry-run-replay` — replay against fixtures
