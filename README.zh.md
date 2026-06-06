@@ -107,6 +107,14 @@ PROJECT.md 可以通过扩展可选地引用现有的 AGENTS.md 和 SKILL.md 文
 
 ---
 
+
+## 示例：LangGraph 支持
+
+- [examples/support/langgraph/README.md](examples/support/langgraph/README.md) — 安装与运行指南
+- [examples/support/langgraph/PROJECT-langgraph-10-agents.md](examples/support/langgraph/PROJECT-langgraph-10-agents.md) — 10 个智能体的并行波次示例
+- 本地运行：`python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode mock --env-file examples/support/.env`
+- 使用提供商运行：`python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode llm --env-file examples/support/.env`
+- 示例统计：10 个智能体、5 个 wave、3 个并行 wave（3+3+2），并已完成一次端到端提供商执行
 ## 贡献
 
 欢迎提交 Issue 和 PR，特别是：

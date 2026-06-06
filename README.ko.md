@@ -99,6 +99,14 @@ PROJECT.md는 확장을 통해 기존 AGENTS.md 및 SKILL.md 파일을 선택적
 - [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — 완전한 ETL/데이터 품질 예시
 - [validator/](validator/) — 참조 Python 검증기
 
+## 예제: LangGraph 지원
+
+- [examples/support/langgraph/README.md](examples/support/langgraph/README.md) — 설치 및 실행 안내
+- [examples/support/langgraph/PROJECT-langgraph-10-agents.md](examples/support/langgraph/PROJECT-langgraph-10-agents.md) — 10개 에이전트 병렬 wave 데모
+- 로컬 실행: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode mock --env-file examples/support/.env`
+- 제공자 실행: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode llm --env-file examples/support/.env`
+- 데모 통계: 10개 에이전트, 5개 wave, 3개의 병렬 wave(3+3+2 구조), 그리고 제공자를 사용한 end-to-end 실행 성공
+
 ---
 
 ## 상태

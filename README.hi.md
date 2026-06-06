@@ -99,6 +99,14 @@ PROJECT.md एक्सटेंशन के ज़रिये मौजूद
 - [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — पूर्ण ETL/डेटा क्वालिटी उदाहरण
 - [validator/](validator/) — संदर्भ Python वैलिडेटर
 
+## उदाहरण: LangGraph समर्थन
+
+- [examples/support/langgraph/README.md](examples/support/langgraph/README.md) — इंस्टॉल और रन गाइड
+- [examples/support/langgraph/PROJECT-langgraph-10-agents.md](examples/support/langgraph/PROJECT-langgraph-10-agents.md) — 10-एजेंट डेमो, समानांतर wave के साथ
+- लोकल रन: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode mock --env-file examples/support/.env`
+- प्रोवाइडर के साथ रन: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode llm --env-file examples/support/.env`
+- डेमो आँकड़े: 10 एजेंट, 5 wave, 3 parallel wave जिनमें 3+3+2 एजेंट हैं, और प्रोवाइडर के साथ सफल end-to-end रन
+
 ---
 
 ## स्थिति

@@ -99,6 +99,14 @@ PROJECT.md puede referenciar opcionalmente archivos AGENTS.md y SKILL.md existen
 - [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — ejemplo completo de ETL/calidad de datos
 - [validator/](validator/) — validador Python de referencia
 
+## Ejemplo: soporte con LangGraph
+
+- [examples/support/langgraph/README.md](examples/support/langgraph/README.md) — guía de instalación y ejecución
+- [examples/support/langgraph/PROJECT-langgraph-10-agents.md](examples/support/langgraph/PROJECT-langgraph-10-agents.md) — demo de 10 agentes con ondas paralelas
+- Ejecución local: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode mock --env-file examples/support/.env`
+- Ejecución con proveedor: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode llm --env-file examples/support/.env`
+- Estadísticas de la demo: 10 agentes, 5 ondas, 3 ondas paralelas con 3+3+2 agentes, y una ejecución final correcta con proveedor
+
 ---
 
 ## Estado

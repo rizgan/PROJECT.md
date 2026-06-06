@@ -99,6 +99,20 @@ PROJECT.md can optionally reference existing AGENTS.md and SKILL.md files throug
 - [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — full ETL/data quality example
 - [validator/](validator/) — reference Python validator
 
+## Example: LangGraph support
+
+- [examples/support/langgraph/README.md](examples/support/langgraph/README.md) — setup and run guide
+- [examples/support/langgraph/PROJECT-langgraph-10-agents.md](examples/support/langgraph/PROJECT-langgraph-10-agents.md) — 10-agent demo with parallel waves
+- Run offline: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode mock --env-file examples/support/.env`
+- Run with provider: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode llm --env-file examples/support/.env`
+- Demo stats: 10 agents, 5 waves, 3 parallel waves with 3+3+2 agents, and a successful end-to-end provider run
+
+## Quick check
+
+1. Install dependencies: `pip install -r examples/support/langgraph/requirements.txt`
+2. Run the offline demo: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode mock --env-file examples/support/.env`
+3. Run the provider demo: `python examples/support/langgraph/run_langgraph_project.py examples/support/langgraph/PROJECT-langgraph-10-agents.md --mode llm --env-file examples/support/.env`
+
 ---
 
 ## Status
