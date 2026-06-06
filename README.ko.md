@@ -96,7 +96,7 @@ PROJECT.md는 확장을 통해 기존 AGENTS.md 및 SKILL.md 파일을 선택적
 
 - [SPEC.md](SPEC.md) — 전체 사양 (Core + Extensions)
 - [examples/PROJECT-minimal.md](examples/PROJECT-minimal.md) — Core 전용 파이프라인
-- [examples/PROJECT-news.md](examples/PROJECT-news.md) — 완전한 실세계 예시
+- [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — 완전한 ETL/데이터 품질 예시
 - [validator/](validator/) — 참조 Python 검증기
 
 ---

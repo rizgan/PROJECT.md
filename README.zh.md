@@ -96,7 +96,7 @@ PROJECT.md 可以通过扩展可选地引用现有的 AGENTS.md 和 SKILL.md 文
 
 - [SPEC.md](SPEC.md) — 完整规范（核心 + 扩展）
 - [examples/PROJECT-minimal.md](examples/PROJECT-minimal.md) — 仅核心管道
-- [examples/PROJECT-news.md](examples/PROJECT-news.md) — 完整的真实世界示例
+- [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — 完整的ETL/数据质量示例
 - [validator/](validator/) — 参考 Python 验证器
 
 ---

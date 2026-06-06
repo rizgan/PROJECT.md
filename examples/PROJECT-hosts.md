@@ -2,7 +2,7 @@
 spec_version: 0.5
 id: PROJECT-hosts
 name: Distributed pipeline (ext:hosts)
-topic: nightly news digest
+topic: daily orders ETL
 ---
 
 ## Hosts
@@ -17,16 +17,16 @@ topic: nightly news digest
 ### collector
 wave: 1
 host: [scraper, scraper_bk, local]
-Collect raw items about: {{ topic }}.
+Collect raw records for: {{ topic }}.
 
 ### summarizer
 wave: 2
 after: collector
 host: [gpu_box, gpu_backup]
-Summarize the collector's output into 5 bullet points.
+Summarize data quality issues in 5 bullet points.
 
 ### publisher
 wave: 3
 after: summarizer
 host: local
-Format the summary as Markdown and write it to disk.
+Format the report as Markdown and write it to disk.

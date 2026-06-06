@@ -96,7 +96,7 @@ PROJECT.md puede referenciar opcionalmente archivos AGENTS.md y SKILL.md existen
 
 - [SPEC.md](SPEC.md) — especificación completa (Core + Extensions)
 - [examples/PROJECT-minimal.md](examples/PROJECT-minimal.md) — pipeline solo con Core
-- [examples/PROJECT-news.md](examples/PROJECT-news.md) — ejemplo completo del mundo real
+- [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — ejemplo completo de ETL/calidad de datos
 - [validator/](validator/) — validador Python de referencia
 
 ---

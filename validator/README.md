@@ -16,7 +16,7 @@ pip install pyyaml
 
 ```bash
 python validate.py ../examples/PROJECT-minimal.md
-python validate.py ../examples/PROJECT-news.md
+python validate.py ../examples/PROJECT-etl.md
 python validate.py ../examples/*.md
 ```
 

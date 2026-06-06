@@ -23,8 +23,8 @@ A PROJECT.md file MUST match one of:
 
 ```text
 PROJECT.md
-PROJECT-<id>.md         e.g. PROJECT-01.md, PROJECT-news.md
-PROJECT_<id>.md         e.g. PROJECT_01.md, PROJECT_news.md
+PROJECT-<id>.md         e.g. PROJECT-01.md, PROJECT-etl.md
+PROJECT_<id>.md         e.g. PROJECT_01.md, PROJECT_etl.md
 ```
 
 Multiple files MAY coexist in one directory. An orchestrator MUST treat each file as an independent project.
@@ -534,7 +534,7 @@ Adds finer-grained budget fields beyond `max_cost`:
 ---
 spec_version: 0.5
 id: PROJECT-01
-name: Daily news
+name: Data quality pipeline
 max_cost: 1.00 USD
 max_wall_time: 30m
 on_overrun: stop
@@ -759,8 +759,8 @@ Extends `ext:run-modes`. When `run_mode: dry_run`, the orchestrator MAY replay a
 ```markdown
 ---
 spec_version: 0.5
-id: PROJECT-news
-name: News
+id: PROJECT-etl
+name: ETL
 run_mode: dry_run
 fixtures: ./fixtures/run-2026-05-30/
 ---

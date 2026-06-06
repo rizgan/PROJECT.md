@@ -96,7 +96,7 @@ PROJECT.md एक्सटेंशन के ज़रिये मौजूद
 
 - [SPEC.md](SPEC.md) — पूर्ण विनिर्देश (Core + Extensions)
 - [examples/PROJECT-minimal.md](examples/PROJECT-minimal.md) — केवल Core पाइपलाइन
-- [examples/PROJECT-news.md](examples/PROJECT-news.md) — पूर्ण वास्तविक-विश्व उदाहरण
+- [examples/PROJECT-etl.md](examples/PROJECT-etl.md) — पूर्ण ETL/डेटा क्वालिटी उदाहरण
 - [validator/](validator/) — संदर्भ Python वैलिडेटर
 
 ---
