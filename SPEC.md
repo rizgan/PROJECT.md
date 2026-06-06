@@ -1,7 +1,7 @@
 # PROJECT.md Specification
 
-**Version:** `0.5` (draft)
-**Status:** Breaking changes possible until `1.0`
+**Version:** `0.5.1` (draft)
+**Status:** Breaking changes possible until `1.0`. Patch versions (`0.5.x`) are clarifications only and remain compatible with files declaring `spec_version: 0.5`.
 **License:** Apache-2.0
 
 PROJECT.md is a Markdown file with a YAML frontmatter block that describes a multi-agent pipeline. An orchestrator reads the file and executes it.
@@ -64,12 +64,12 @@ This section is normative. A "PROJECT.md compatible" orchestrator MUST implement
 
 ### 2.1 Frontmatter (Core)
 
-| Field          | Type            | Required | Description                                                                   |
-| -------------- | --------------- | -------- | ----------------------------------------------------------------------------- |
-| `spec_version` | string          | yes      | Spec version this file targets. `0.5` for this version.                       |
-| `id`           | string          | yes      | Stable identifier. Allowed: `[A-Za-z0-9_-]+`.                                 |
-| `name`         | string          | yes      | Human-readable name.                                                          |
-| `extensions`   | list of strings | no       | Extension identifiers (e.g. `ext:tools`) that this file relies on. See 2.1.1. |
+| Field          | Type            | Required | Description                                                                    |
+| -------------- | --------------- | -------- | ------------------------------------------------------------------------------ |
+| `spec_version` | string          | yes      | Spec version this file targets. `0.5` (or any `0.5.x` patch) for this version. |
+| `id`           | string          | yes      | Stable identifier. Allowed: `[A-Za-z0-9_-]+`.                                  |
+| `name`         | string          | yes      | Human-readable name.                                                           |
+| `extensions`   | list of strings | no       | Extension identifiers (e.g. `ext:tools`) that this file relies on. See 2.1.1.  |
 
 #### 2.1.1 `extensions` declaration
 
@@ -88,7 +88,9 @@ Rules:
 - Each entry MUST be an extension identifier defined in section 3 (e.g. `ext:tools`, `ext:io-schema`).
 - An orchestrator that does not support an extension listed here MUST stop with a clear error before any agent runs ("file requires `ext:streaming`, this orchestrator does not support it"). This is fail-fast on declared dependencies.
 - An orchestrator that supports an extension listed here MUST treat the corresponding fields/sections as active for this file.
-- If `extensions` is omitted, the orchestrator MUST infer required extensions from the fields and sections present in the file. Inference failures (an unknown field that is not gated by 2.5(7)) follow the warning rule of 2.5(7).
+- If `extensions` is omitted, the orchestrator MAY infer required extensions from the fields and sections present in the file. A field or section that uniquely maps to a known extension MAY be treated as activating that extension; ambiguous or unknown fields/sections fall under the rules of 2.5(6) and 2.5(7) (sections silently ignored, inline fields warned or rejected). The gating-pattern rule in 2.5(7) always applies and is never softened by inference.
+- Authors SHOULD declare `extensions` explicitly. Relying on inference makes feasibility-checks (last bullet of this list) weaker and makes the file less portable.
+- If a profile (`ext:profiles`) supplies any Core-required frontmatter field on behalf of the file, the file MUST declare `ext:profiles` in `extensions`. This guarantees that a Core-only orchestrator fails the feasibility check rather than the Core-validation check.
 - Listing an extension that the file does not actually use is permitted (no-op) but discouraged; a strict validator MAY warn.
 - The `extensions` list is the file's **declared dependencies**. The orchestrator's **advertised support** (per the introduction to section 3) is the converse. A run is feasible iff `file.extensions ⊆ orchestrator.supported_extensions`.
 
@@ -100,7 +102,7 @@ Agent name MUST match `[a-z][a-z0-9_]*`.
 
 Each agent subsection has two parts:
 
-1. **Inline fields** — lines of `key: value` directly under the heading.
+1. **Inline fields** — lines of `key: value` directly under the heading. The inline-fields block ends at the first blank line, or at the first line that does not match `key: value` (or its YAML block-scalar / list continuation), whichever comes first. Lines after that boundary belong to the instruction body, even if they happen to contain a colon.
 2. **Instruction body** — free-form Markdown after the inline fields. This is the agent's prompt.
 
 ```markdown
@@ -135,7 +137,7 @@ If a referenced variable is unresolved, the orchestrator MUST stop with an error
 
 ### 2.5 Conformance
 
-To claim "PROJECT.md `0.5` Core compatible", an orchestrator MUST:
+To claim "PROJECT.md `0.5` Core compatible" (any `0.5.x`), an orchestrator MUST:
 
 1. Parse files matching section 1.1.
 2. Validate Core frontmatter (2.1).
@@ -149,7 +151,7 @@ To claim "PROJECT.md `0.5` Core compatible", an orchestrator MUST:
 
 ### 2.6 Variable namespaces
 
-Core template substitution (2.4) resolves names against frontmatter fields. Extensions MAY introduce additional top-level namespaces in `{{ ns.key }}` form (e.g. `{{ memory.x }}` from `ext:memory`, `{{ timestamp }}` from `ext:observability`). An orchestrator MUST resolve namespaces only for extensions it supports; an unresolved namespace MUST be treated as an unresolved variable per 2.4.
+Core template substitution (2.4) resolves names against frontmatter fields. Extensions MAY introduce additional top-level namespaces in `{{ ns.key }}` form (e.g. `{{ memory.x }}` from `ext:memory`, `{{ observability.timestamp }}` from `ext:observability`). Bare extension-provided names (without an `ns.` prefix) are not permitted — every extension-supplied variable MUST live under its own namespace to avoid collisions with frontmatter fields. An orchestrator MUST resolve namespaces only for extensions it supports; an unresolved namespace MUST be treated as an unresolved variable per 2.4.
 
 Layered substitution sources, when multiple are active, are merged in the following precedence (later wins):
 
@@ -608,7 +610,7 @@ Adds a `## Observability` section and `trace_tags` on agents.
 ```markdown
 ## Observability
 tracing: langfuse
-run_id_format: "{{ id }}-{{ timestamp }}"
+run_id_format: "{{ id }}-{{ observability.timestamp }}"
 log_level: info
 
 ### writer
@@ -619,7 +621,7 @@ trace_tags: [pharma, prod]
 Rules:
 
 - `tracing` is a free-form identifier (e.g. `langfuse`, `otel`, `none`). Backend wiring is orchestrator-defined.
-- `run_id_format` MUST resolve to a unique string per run. `{{ timestamp }}` is provided by the orchestrator.
+- `run_id_format` MUST resolve to a unique string per run. `{{ observability.timestamp }}` is provided by the orchestrator under the `observability.` namespace (see 2.6).
 - `log_level` values: `debug`, `info`, `warn`, `error`. Default `info`.
 - `trace_tags` are propagated to all spans emitted by the agent.
 
@@ -641,6 +643,7 @@ loop:
 
 Rules:
 
+- An orchestrator advertising `ext:human-in-the-loop` MUST also advertise `ext:control-flow`, because the rejection-routing surface is defined as a reuse of `loop:` rather than a parallel form.
 - An agent with `human_review: true` MUST pause after producing output and present `prompt_to_human` plus the agent's output to a human via an orchestrator-defined channel. The human's decision is recorded as a field named `decision` (typical values `approved` / `rejected`) on the agent's output object; it is therefore accessible to `loop.if` per `ext:control-flow`'s expression scope (3.5), but it is not a new template namespace and does not appear in `{{ ... }}` substitution.
 - Re-routing on rejection is expressed via the existing `loop:` block (`ext:control-flow`); no new `on_approve`/`on_reject` fields are introduced.
 - `timeout` (reusing `ext:reliability`) defines how long to wait for a decision; on timeout, the orchestrator MUST treat the step as failed and apply `## On Failure`.
@@ -759,8 +762,9 @@ fixtures: ./fixtures/run-2026-05-30/
 Rules:
 
 - `fixtures` is a path/URI to recorded run outputs. Recommended layout: `<fixtures>/<agent_name>.json` for single-shot agents, `<fixtures>/<agent_name>.<iteration>.json` (zero-based) for agents that loop via `ext:control-flow` or `ext:human-in-the-loop`.
+- The `fixtures` directory/URI itself is a required resource per 3.0 and MUST be resolvable at load time. Individual per-agent fixture files inside it are resolved lazily as each agent is about to run — this is the explicit lazy-resolution case allowed by 3.0.
 - When a fixture is present for an agent (and matches the iteration index, if applicable), the orchestrator MUST use it instead of invoking the model and MUST NOT incur cost for that agent.
-- When a fixture is missing, the orchestrator MUST fail the agent (no silent fallback to live calls in `dry_run`).
+- When a fixture is missing, the orchestrator MUST fail the agent at runtime (no silent fallback to live calls in `dry_run`). A missing per-agent fixture is an agent-runtime failure, not a load-time failure.
 - Replay support for `ext:streaming` is optional in v0.5; an orchestrator that does not support streaming replay MUST fail fast on a `streaming: true` producer rather than synthesize chunks.
 - `ext:eval` MAY run against replayed outputs.
 
@@ -909,10 +913,11 @@ Enforcement: per section 2.5(7), orchestrators MUST reject (not ignore) unknown 
 This spec uses semver-like versioning at the spec level:
 
 - `0.x` — draft, breaking changes possible.
+- `0.x.y` — patch releases of a `0.x` draft. Patch releases MUST be limited to clarifications, editorial fixes, and tightening of underspecified MUST/SHOULD wording; they MUST NOT add new fields, sections, or extensions, and MUST NOT change the semantics of existing ones. A file declaring `spec_version: 0.x` is therefore valid against any `0.x.y` orchestrator and vice versa.
 - `1.x` — stable. Additions are non-breaking; field semantics will not change.
 - A new major version MAY break compatibility.
 
-Files MUST declare `spec_version`. Orchestrators MUST reject unsupported versions.
+Files MUST declare `spec_version`. The value MAY be `MAJOR.MINOR` (e.g. `0.5`) or `MAJOR.MINOR.PATCH` (e.g. `0.5.1`); orchestrators MUST accept either form when the major/minor matches a supported version. Orchestrators MUST reject unsupported major/minor versions.
 
 ---
 
